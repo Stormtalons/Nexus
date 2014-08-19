@@ -27,48 +27,6 @@ case class Repeat(_val: AnyVal)
 
 object Main extends App
 {
-//	var ar1 = Files.readAllBytes(Paths.get("test.txt"))
-//	ar1 = ar1.drop(5)
-//	val a1 = new Array[Byte](1024 * 10)
-//	var ar2 = Files.readAllBytes(Paths.get("test2.txt"))
-//	ar2 = ar2.drop(8)
-//	val a2 = new Array[Byte](1024 * 10)
-//	for (i <- 0 to a1.length - 1)
-//	{
-//		a1(i) = ar1(i)
-//		a2(i) = ar2(i)
-//	}
-//	println(ar1.length)
-//	println(ar2.length)
-//	var mis = 0
-//	for (i <- 0 to ar2.length - 1)
-//		if (ar1(i) != ar2(i))
-//			mis += 1
-//	println(mis + " mismatched data points")
-//
-//	Files.write(Paths.get("out1.txt"), a1)
-//	Files.write(Paths.get("out2.txt"), a2)
-//
-//	System.exit(0)
-
-//	val url = new URL("https://api.spotify.com/v1/search?q=Nemo&type=track")
-//	val urlc = url.openConnection
-//	urlc.connect
-//	val sb = new StringBuilder
-//	val his = new Scanner(urlc.getInputStream)
-//	while (his.hasNext)
-//		sb.append(his.next)
-//	his.close
-//	println(sb.toString.replaceAll(",", ",\n"))
-
-//	val sb = new StringBuffer
-//	sb.append("\"next\":\"https://api.spotify.com/v1/search?query=Nemo&offset=20&limit=20&type=track|EMasdfasdfasdf")
-//	val a = new Array[Char](sb.indexOf("|EM") + 3)
-//	sb.getChars(0, a.length, a, 0)
-//	sb.delete(0, a.length)
-//	println(new String(a).substring(0, a.length - 3))
-//	println(sb.substring(0, 10))
-//	System.exit(0)
 	val fn = 2
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
