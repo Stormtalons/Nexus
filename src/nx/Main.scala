@@ -4,6 +4,7 @@ import javafx.application.Platform
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.Scene
 import javafx.scene.control.Button
+import javafx.scene.image.{Image, PixelFormat, WritableImage}
 import javafx.scene.layout.{AnchorPane, HBox, VBox}
 import javafx.stage.{Stage, Window, WindowEvent}
 
@@ -25,9 +26,42 @@ case class Repeat(_val: AnyVal)
 
 object Main extends App
 {
+//	var ar1 = Files.readAllBytes(Paths.get("test.txt"))
+//	ar1 = ar1.drop(5)
+//	val a1 = new Array[Byte](1024 * 10)
+//	var ar2 = Files.readAllBytes(Paths.get("test2.txt"))
+//	ar2 = ar2.drop(8)
+//	val a2 = new Array[Byte](1024 * 10)
+//	for (i <- 0 to a1.length - 1)
+//	{
+//		a1(i) = ar1(i)
+//		a2(i) = ar2(i)
+//	}
+//	println(ar1.length)
+//	println(ar2.length)
+//	var mis = 0
+//	for (i <- 0 to ar2.length - 1)
+//		if (ar1(i) != ar2(i))
+//			mis += 1
+//	println(mis + " mismatched data points")
+//
+//	Files.write(Paths.get("out1.txt"), a1)
+//	Files.write(Paths.get("out2.txt"), a2)
+//
+//	System.exit(0)
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
-	var desktop: FolderWidget = null
+	var desktop_ : FolderWidget = null
+	def desktop = desktop_
+	def desktop_=(_fw: FolderWidget) =
+	{
+		if (desktop_ != null)
+			desktopPanel.getChildren.remove(desktop_)
+		desktop_ = _fw
+		desktopPanel.getChildren.add(0, desktop_)
+	}
+//	def setDesktopBackground(_file: String) = desktop.setStyle("-fx-background-image: url(\"" + _file + "\")")
+	def setDesktopBackground(_file: String) = {println(_file);desktop.background = new Image(_file)}
 	
 	new Main().launch
 	
@@ -38,9 +72,30 @@ object Main extends App
 
 	}
 
-	def loadState =
+	def loadState(_json: JSON) =
 	{
-
+		fx({
+			println("loading state")
+			desktop = new FolderWidget(_json.get[String]("name"))
+			val bg = _json.get[JSON]("background")
+			val w = bg.get[String]("width").toDouble.toInt
+			val h = bg.get[String]("height").toDouble.toInt
+			val data = bg.get[String]("data")
+			var bytes = Array[Byte]()
+			for (b <- data.split(","))
+				bytes = bytes :+ b.toByte
+			val bgimg = new WritableImage(w, h)
+			println("writing image")
+			bgimg.getPixelWriter.setPixels(0, 0, w, h, PixelFormat.getByteBgraInstance, bytes, 0, 0)
+			println("written image")
+			AnchorPane.setLeftAnchor(desktop, 0d)
+			AnchorPane.setRightAnchor(desktop, 0d)
+			AnchorPane.setTopAnchor(desktop, 0d)
+			AnchorPane.setBottomAnchor(desktop, 0d)
+			desktop.confirmConstraintsFor(5, 10)
+			desktop.expand(false)
+			desktop.setPrefSize(1024, 768)
+		})
 	}
 
 	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
@@ -51,13 +106,7 @@ class Main extends javafx.application.Application
 {
 	def launch = javafx.application.Application.launch()
 	def desktop = Main.desktop
-	def desktop_=(_fw: FolderWidget) =
-	{
-		if (Main.desktop != null)
-			Main.desktopPanel.getChildren.remove(Main.desktop)
-		Main.desktop = _fw
-		Main.desktopPanel.getChildren.add(0, Main.desktop)
-	}
+	def desktop_=(_fw: FolderWidget) = Main.desktop = _fw
 
 	var peerManager: PeerManager = null
 
@@ -72,13 +121,13 @@ class Main extends javafx.application.Application
 		mainPanel.getChildren.add(Main.desktopPanel)
 
 		desktop = new FolderWidget("Desktop")
+		Main.setDesktopBackground("/nx/res/background.png")
 		AnchorPane.setLeftAnchor(desktop, 0d)
 		AnchorPane.setRightAnchor(desktop, 0d)
 		AnchorPane.setTopAnchor(desktop, 0d)
 		AnchorPane.setBottomAnchor(desktop, 0d)
 		desktop.confirmConstraintsFor(5, 10)
 		desktop.expand(false)
-		desktop.setStyle("-fx-background-image: url(\"/nx/res/background.png\")")
 		desktop.setPrefSize(1024, 768)
 
 		val devToolbar = new HBox

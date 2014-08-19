@@ -6,11 +6,13 @@ import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.{HPos, Pos, VPos}
 import javafx.scene.Node
 import javafx.scene.control.{ContextMenu, MenuItem}
+import javafx.scene.image.{Image, PixelFormat}
 import javafx.scene.input._
 import javafx.scene.layout._
+import javafx.stage.FileChooser
 
-import nx.{JSON, Main}
 import nx.settings.StringSetting
+import nx.{JSON, Main}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
@@ -29,6 +31,18 @@ class FolderWidget extends Widget
 		this(_file.getName)
 		if (_file.isDirectory)
 			_file.listFiles.foreach(_f => addWidget(new FileWidget(_f, Desktop.getDesktop.open(_f))))
+	}
+
+	private var background_ : Image = null
+	def background = background_
+	def background_=(_img: Image) =
+	{
+		background_ = _img
+		setBackground(new Background(new BackgroundImage(background_,
+														BackgroundRepeat.NO_REPEAT,
+														BackgroundRepeat.NO_REPEAT,
+														BackgroundPosition.DEFAULT,
+														BackgroundSize.DEFAULT)))
 	}
 
 	private val name_ = new StringSetting("", "New Folder", "/nx/res/folder.png", scale)
@@ -57,6 +71,7 @@ class FolderWidget extends Widget
 	protected val headerMenu = new ContextMenu
 	protected val remove = new MenuItem("Delete")
 	remove.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Main.desktop.removeWidget(FolderWidget.this)})
+
 	headerMenu.getItems.addAll(remove)
 	header.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
 		if (_evt.getSource.isInstanceOf[Node])
@@ -215,18 +230,20 @@ class FolderWidget extends Widget
 	protected val widgetMenu = new ContextMenu
 	protected val addFolder = new MenuItem("Add Folder")
 	addFolder.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = addWidget(new FolderWidget("New Folder"))})
-	widgetMenu.getItems.addAll(addFolder)
+	protected val setBackground = new MenuItem("Choose Background")
+	setBackground.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) =
+	{
+		val bg = new FileChooser().showOpenDialog(Main.window)
+		if (bg != null)
+			Main.setDesktopBackground(bg.toURI.toURL.toString)
+	}})
+	widgetMenu.getItems.addAll(addFolder, setBackground)
 	widgets.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
 		if (_evt.getSource.isInstanceOf[Node])
 		{
 			widgetMenu.show(_evt.getSource.asInstanceOf[Node], _evt.getScreenX, _evt.getScreenY)
 			_evt.consume
 		}})
-	/*
-		{
-			widget:""
-		}
-	*/
 
 	def toJSON: JSON =
 	{
@@ -235,6 +252,17 @@ class FolderWidget extends Widget
 		toReturn += JSON("type", "FolderWidget")
 		toReturn += JSON("name", name)
 		toReturn += JSON("expanded", isExpanded.toString)
+		val img = JSON()
+		img += JSON("width", background.getWidth.toString)
+		img += JSON("height", background.getHeight.toString)
+		val pr = background.getPixelReader
+		val bytes = new Array[Byte](background.getWidth.toInt * background.getHeight.toInt)
+		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, 0)
+		val sb = new StringBuilder
+		for (b <- bytes)
+			sb.append(b + ",")
+		img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
+		toReturn += JSON("background", img)
 
 		val widgets = new ArrayBuffer[JSON]
 		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)

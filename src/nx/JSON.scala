@@ -157,9 +157,9 @@ case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None
 			values(i).value
 		else
 			null
-	def get(key: String): AnyRef =
+	def get[T >: Null](key: String): T =
 	{
-		values.foreach(v => if (v.label.equals(key)) return v.value)
+		values.foreach(v => if (v.label.equals(key) && v.value.isInstanceOf[T]) return v.value.asInstanceOf[T])
 		null
 	}
 
