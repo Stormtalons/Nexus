@@ -1,10 +1,11 @@
 package nx
 
+import java.nio.file.{Files, Paths}
 import javafx.application.Platform
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.Scene
 import javafx.scene.control.Button
-import javafx.scene.image.{Image, PixelFormat, WritableImage}
+import javafx.scene.image.{WritableImage, Image}
 import javafx.scene.layout.{AnchorPane, HBox, VBox}
 import javafx.stage.{Stage, Window, WindowEvent}
 
@@ -60,14 +61,15 @@ object Main extends App
 //	his.close
 //	println(sb.toString.replaceAll(",", ",\n"))
 
-	val sb = new StringBuffer
-	sb.append("\"next\":\"https://api.spotify.com/v1/search?query=Nemo&offset=20&limit=20&type=track|EMasdfasdfasdf")
-	val a = new Array[Char](sb.indexOf("|EM") + 3)
-	sb.getChars(0, a.length, a, 0)
-	sb.delete(0, a.length)
-	println(new String(a).substring(0, a.length - 3))
-	println(sb.substring(0, 10))
-	System.exit(0)
+//	val sb = new StringBuffer
+//	sb.append("\"next\":\"https://api.spotify.com/v1/search?query=Nemo&offset=20&limit=20&type=track|EMasdfasdfasdf")
+//	val a = new Array[Char](sb.indexOf("|EM") + 3)
+//	sb.getChars(0, a.length, a, 0)
+//	sb.delete(0, a.length)
+//	println(new String(a).substring(0, a.length - 3))
+//	println(sb.substring(0, 10))
+//	System.exit(0)
+	val fn = 2
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
 	var desktop_ : FolderWidget = null
@@ -100,13 +102,17 @@ object Main extends App
 			val w = bg.get[String]("width").toDouble.toInt
 			val h = bg.get[String]("height").toDouble.toInt
 			val data = bg.get[String]("data")
-			var bytes = Array[Byte]()
-			for (b <- data.split(","))
-				bytes = bytes :+ b.toByte
+			Files.write(Paths.get("temp.txt"), data.getBytes)
+			var bytes = data.split(",")
 			val bgimg = new WritableImage(w, h)
-			println("writing image")
-			bgimg.getPixelWriter.setPixels(0, 0, w, h, PixelFormat.getByteBgraInstance, bytes, 0, 0)
-			println("written image")
+			var counter = 0
+			for (i <- 0 to h - 1)
+				for (j <- 0 to w - 1)
+				{
+					bgimg.getPixelWriter.setArgb(j, i, bytes(counter).toInt)
+					counter += 1
+				}
+			desktop.background = bgimg
 			AnchorPane.setLeftAnchor(desktop, 0d)
 			AnchorPane.setRightAnchor(desktop, 0d)
 			AnchorPane.setTopAnchor(desktop, 0d)
@@ -156,7 +162,9 @@ class Main extends javafx.application.Application
 		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = println(desktop.toJSON + "\n\n")})
 		val cnct = new Button("Connect to self")
 		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", 19265)})
-		devToolbar.getChildren.addAll(newFolder, json, cnct)
+		val test = new Button("Test")
+		test.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Files.write(Paths.get("test.txt"), ("DESKTOP|" + Main.serialize + "|EM").getBytes)})
+		devToolbar.getChildren.addAll(newFolder, json, cnct, test)
 
 		mainPanel.getChildren.add(devToolbar)
 

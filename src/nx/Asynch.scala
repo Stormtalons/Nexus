@@ -10,7 +10,7 @@ trait Asynch
 		running = true
 		done = false
 		while (running)
-			try code() catch{case e=>}
+			try code() catch{case e=>println(e.getMessage);}
 		if (callback != null)
 			callback()
 		done = true

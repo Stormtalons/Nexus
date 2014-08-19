@@ -1,5 +1,6 @@
 package nx.comm
 
+import java.io.{File, FileOutputStream}
 import java.net.{InetSocketAddress, Socket}
 
 import nx.Main
@@ -46,7 +47,7 @@ class PeerConnection
 		{
 			socket.connect(new InetSocketAddress(_host, _port), 5000)
 			send("gimme")
-		} catch {case e: Exception => dispose}
+		} catch {case e: Exception => println(e.getMessage);dispose}
 	}
 
 	def receiveConnection(_socket: Socket) =
@@ -62,16 +63,30 @@ class PeerConnection
 			{
 				val data = new Array[Byte](socket.getInputStream.available)
 				socket.getInputStream.read(data)
+				val f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\folder" + Main.fn + "\\in.txt")
+				if (!f.exists)
+					f.createNewFile
+				val fw = new FileOutputStream(f, true)
+				fw.write(data)
+				fw.flush
+				fw.close
 				appendToIncoming(new String(data))
 			}
 
 			var outMsg = getNextOutgoingMsg
 			while(outMsg.length > 0)
 			{
+				val f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\folder" + Main.fn + "\\out.txt")
+				if (!f.exists)
+					f.createNewFile
+				val fw = new FileOutputStream(f, true)
+				fw.write(outMsg.getBytes)
+				fw.flush
+				fw.close
 				socket.getOutputStream.write(outMsg.getBytes)
 				outMsg = getNextOutgoingMsg
 			}
-		} catch {case e: Exception => dispose}
+		} catch {case e: Exception => println(e.getMessage);dispose}
 	}
 
 	def send(_str: String) = appendToOutgoing(_str + "|EM")
@@ -79,6 +94,6 @@ class PeerConnection
 	def dispose =
 	{
 		recycleable = true
-		try socket.close catch{case e: Exception =>}
+		try socket.close catch{case e: Exception =>println(e.getMessage);}
 	}
 }

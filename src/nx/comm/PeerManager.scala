@@ -1,8 +1,6 @@
 package nx.comm
 
-import java.io.{File, FileWriter}
 import java.net.Socket
-import java.util.Random
 
 import nx.{Asynch, JSON, Main}
 
@@ -42,13 +40,7 @@ class PeerManager extends Asynch
 			var incMsg = _p.getNextIncomingMsg
 			while(incMsg.length > 0)
 			{
-				var f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\in" + new Random().nextInt(5000) + ".txt")
-				if (!f.exists)
-					f.createNewFile
-				var fw = new FileWriter(f)
-				fw.write(incMsg)
-				fw.flush
-				fw.close
+
 //				Files.write(Paths.get("D:\\Code\\Java\\IntelliJ\\Nexus\\test1.txt"), incMsg.getBytes)
 				val parts = incMsg.split("\\|")
 				if (parts(0).equals("DESKTOP"))
@@ -56,13 +48,6 @@ class PeerManager extends Asynch
 				if (incMsg.equals("gimme"))
 				{
 					val str = "DESKTOP|" + Main.serialize
-					f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\out" + new Random().nextInt(5000) + ".txt")
-					if (!f.exists)
-						f.createNewFile
-					fw = new FileWriter(f)
-					fw.write(str)
-					fw.flush
-					fw.close
 //					Files.write(Paths.get("D:\\Code\\Java\\IntelliJ\\Nexus\\test2.txt"), str.getBytes)
 					_p.send(str)
 				}

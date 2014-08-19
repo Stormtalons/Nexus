@@ -13,13 +13,13 @@ class PeerListener extends Asynch
 		socket = new ServerSocket(port)
 		socket.setSoTimeout(5000)
 	}
-	catch{case e: Exception =>}
+	catch{case e: Exception => println(e.getMessage)}
 
 	var code: () => Unit = null
 
 	def start(_callback: (Socket) => Unit) =
 	{
-		code = () => {try _callback(socket.accept()) catch {case ste: SocketTimeoutException => case npe: NullPointerException => stop case e: Exception =>}}
+		code = () => {try _callback(socket.accept()) catch {case ste: SocketTimeoutException => case npe: NullPointerException => stop case e: Exception =>println(e.getMessage);}}
 		run
 	}
 }

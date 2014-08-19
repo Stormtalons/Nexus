@@ -6,7 +6,7 @@ import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.{HPos, Pos, VPos}
 import javafx.scene.Node
 import javafx.scene.control.{ContextMenu, MenuItem}
-import javafx.scene.image.{Image, PixelFormat}
+import javafx.scene.image.Image
 import javafx.scene.input._
 import javafx.scene.layout._
 import javafx.stage.FileChooser
@@ -256,11 +256,14 @@ class FolderWidget extends Widget
 		img += JSON("width", background.getWidth.toString)
 		img += JSON("height", background.getHeight.toString)
 		val pr = background.getPixelReader
-		val bytes = new Array[Byte](background.getWidth.toInt * background.getHeight.toInt)
-		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, 0)
+		var ints = new ArrayBuffer[Int]
+		for (i <- 0 to background.getHeight.toInt - 1)
+			for (j <- 0 to background.getWidth.toInt - 1)
+				ints += pr.getArgb(j, i) //returns an int
+//		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, 0)
 		val sb = new StringBuilder
-		for (b <- bytes)
-			sb.append(b + ",")
+		for (i <- ints)
+			sb.append(i + ",")
 		img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
 		toReturn += JSON("background", img)
 
