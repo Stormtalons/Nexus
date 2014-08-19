@@ -21,22 +21,7 @@ class PeerListener extends Asynch
 
 	def start(_callback: (Socket) => Unit) =
 	{
-		code = () =>
-		{
-			if (socket != null)
-			{
-				try _callback(socket.accept)
-				catch
-					{
-						case ste: SocketTimeoutException =>
-						case npe: NullPointerException =>
-							log("null pointer on server callback")
-							stop
-						case e: Exception => log(e.getMessage)
-					}
-			}
-			Thread.sleep(100)
-		}
+		code = () => if (socket != null) try _callback(socket.accept) catch {case ste: SocketTimeoutException => case e: Exception => log(e.getMessage);stop}
 		run
 	}
 }

@@ -71,9 +71,9 @@ object Main extends App
 	{
 		fx({
 			desktop = new FolderWidget(_json.get[String]("name"))
-			val bg = _json.get[JSON]("background")
+			val bg = _json.get[String]("background")
 			if (bg != null)
-				desktop.background = bg.get[String]("data").split(",").map(_.toByte)
+				desktop.background = bg.split(",").map(_.toByte)
 			AnchorPane.setLeftAnchor(desktop, 0d)
 			AnchorPane.setRightAnchor(desktop, 0d)
 			AnchorPane.setTopAnchor(desktop, 0d)

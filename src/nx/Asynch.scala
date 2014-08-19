@@ -13,7 +13,7 @@ trait Asynch
 		done = false
 		while (running)
 			if (code != null)
-				try code() catch{case e=> log(e.getMessage);e.printStackTrace}
+				try code();Thread.sleep(1) catch{case e=> log(e.getMessage);e.printStackTrace}
 		if (callback != null)
 			callback()
 		done = true

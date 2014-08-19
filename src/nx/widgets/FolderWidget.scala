@@ -255,13 +255,7 @@ class FolderWidget extends Widget
 		toReturn += JSON("name", name)
 		toReturn += JSON("expanded", isExpanded.toString)
 		if (background != null)
-		{
-			val img = JSON()
-			img += JSON("width", background.getWidth.toString)
-			img += JSON("height", background.getHeight.toString)
-			img += JSON("data", (background: Array[Byte]).mkString(","))
-			toReturn += JSON("background", img)
-		}
+			toReturn += JSON("background", (background: Array[Byte]).mkString(","))
 
 		val widgets = new ArrayBuffer[JSON]
 		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)
