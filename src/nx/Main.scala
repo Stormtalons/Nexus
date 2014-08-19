@@ -1,6 +1,6 @@
 package nx
 
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.file.{Files, Paths}
 import javafx.application.Platform
 import javafx.embed.swing.SwingFXUtils
@@ -33,6 +33,13 @@ object Main extends App
 	implicit def strToByteArray(_str: String): Array[Byte] = _str.getBytes("UTF-8")
 	implicit def byteArrayToStr(_bytes: Array[Byte]): String = new String(_bytes, "UTF-8")
 	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
+	implicit def byteArrayToImg(_bytes: Array[Byte]): Image = SwingFXUtils.toFXImage(ImageIO.read(new ByteArrayInputStream(_bytes)), null)
+	implicit def imgToByteArray(_img: Image): Array[Byte] =
+	{
+		val baos = new ByteArrayOutputStream
+		ImageIO.write(SwingFXUtils.fromFXImage(_img, null), "jpg", baos)
+		baos.toByteArray
+	}
 
 	val sep = "<@@>"
 	val eom = sep + "EM"
@@ -63,14 +70,10 @@ object Main extends App
 	def loadState(_json: JSON) =
 	{
 		fx({
-			log("loading state")
 			desktop = new FolderWidget(_json.get[String]("name"))
 			val bg = _json.get[JSON]("background")
 			if (bg != null)
-			{
-				val data = bg.get[String]("data")
-				desktop.background = SwingFXUtils.toFXImage(ImageIO.read(new ByteArrayInputStream(data.split(",").map(_.toByte))), null)
-			}
+				desktop.background = bg.get[String]("data").split(",").map(_.toByte)
 			AnchorPane.setLeftAnchor(desktop, 0d)
 			AnchorPane.setRightAnchor(desktop, 0d)
 			AnchorPane.setTopAnchor(desktop, 0d)
@@ -81,11 +84,7 @@ object Main extends App
 		})
 	}
 
-	def log(_str: String) =
-	{
-		println("Logger: " + _str)
-	}
-
+	def log(_str: String) = println("Logger: " + _str)
 	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
 	def fx(code: => Unit) = Platform.runLater(new Runnable {def run = code})
 }

@@ -1,8 +1,7 @@
 package nx.widgets
 
 import java.awt.Desktop
-import java.io.{File, OutputStream}
-import javafx.embed.swing.SwingFXUtils
+import java.io.File
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.{HPos, Pos, VPos}
 import javafx.scene.Node
@@ -11,7 +10,6 @@ import javafx.scene.image.Image
 import javafx.scene.input._
 import javafx.scene.layout._
 import javafx.stage.FileChooser
-import javax.imageio.ImageIO
 
 import nx.settings.StringSetting
 import nx.{JSON, Main}
@@ -21,6 +19,7 @@ import scala.reflect.ClassTag
 
 class FolderWidget extends Widget
 {
+	import Main._
 
 	getStyleClass.add("folderWidget")
 
@@ -73,7 +72,7 @@ class FolderWidget extends Widget
 
 	protected val headerMenu = new ContextMenu
 	protected val remove = new MenuItem("Delete")
-	remove.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Main.desktop.removeWidget(FolderWidget.this)})
+	remove.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = desktop.removeWidget(FolderWidget.this)})
 
 	headerMenu.getItems.addAll(remove)
 	header.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
@@ -142,7 +141,7 @@ class FolderWidget extends Widget
 	def removeWidget(_w: Widget): Boolean =
 		if (widgets.getChildren.contains(_w))
 		{
-			Main.fx(widgets.getChildren.remove(_w))
+			fx(widgets.getChildren.remove(_w))
 			true
 		}
 		else
@@ -202,7 +201,7 @@ class FolderWidget extends Widget
 	confirmConstraintsFor(5, 5)
 
 	def expand: Unit = expand(true)
-	def expand(_keepThumbnail: Boolean): Unit = Main.fx({
+	def expand(_keepThumbnail: Boolean): Unit = fx({
 		if (!_keepThumbnail)
 			contentPane.getChildren.remove(header)
 		contentPane.getChildren.add(widgets)
@@ -215,7 +214,7 @@ class FolderWidget extends Widget
 		}
 	})
 
-	def collapse = Main.fx({
+	def collapse = fx({
 		if (!contentPane.getChildren.contains(header))
 			contentPane.getChildren.add(header)
 		contentPane.getChildren.remove(widgets)
@@ -236,9 +235,9 @@ class FolderWidget extends Widget
 	protected val setBackground = new MenuItem("Choose Background")
 	setBackground.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) =
 	{
-		val bg = new FileChooser().showOpenDialog(Main.window)
+		val bg = new FileChooser().showOpenDialog(window)
 		if (bg != null)
-			Main.setDesktopBackground(bg.toURI.toURL.toString)
+			setDesktopBackground(bg.toURI.toURL.toString)
 	}})
 	widgetMenu.getItems.addAll(addFolder, setBackground)
 	widgets.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
@@ -260,12 +259,9 @@ class FolderWidget extends Widget
 			val img = JSON()
 			img += JSON("width", background.getWidth.toString)
 			img += JSON("height", background.getHeight.toString)
-			val sb = new StringBuilder
-			ImageIO.write(SwingFXUtils.fromFXImage(background, null), "jpg", new OutputStream {def write(_i: Int) = sb.append(_i).append(',')})
-			img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
+			img += JSON("data", (background: Array[Byte]).mkString(","))
 			toReturn += JSON("background", img)
 		}
-
 
 		val widgets = new ArrayBuffer[JSON]
 		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)
