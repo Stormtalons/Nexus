@@ -49,6 +49,25 @@ object Main extends App
 //	Files.write(Paths.get("out2.txt"), a2)
 //
 //	System.exit(0)
+
+//	val url = new URL("https://api.spotify.com/v1/search?q=Nemo&type=track")
+//	val urlc = url.openConnection
+//	urlc.connect
+//	val sb = new StringBuilder
+//	val his = new Scanner(urlc.getInputStream)
+//	while (his.hasNext)
+//		sb.append(his.next)
+//	his.close
+//	println(sb.toString.replaceAll(",", ",\n"))
+
+	val sb = new StringBuffer
+	sb.append("\"next\":\"https://api.spotify.com/v1/search?query=Nemo&offset=20&limit=20&type=track|EMasdfasdfasdf")
+	val a = new Array[Char](sb.indexOf("|EM") + 3)
+	sb.getChars(0, a.length, a, 0)
+	sb.delete(0, a.length)
+	println(new String(a).substring(0, a.length - 3))
+	println(sb.substring(0, 10))
+	System.exit(0)
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
 	var desktop_ : FolderWidget = null
