@@ -25,11 +25,13 @@ case class Repeat(_val: AnyVal)
 
 object Main extends App
 {
-	new Main().launch
-
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
 	var desktop: FolderWidget = null
+	
+	new Main().launch
+	
+	def serialize: String = desktop.toJSON.condensed
 
 	def saveState =
 	{
@@ -84,7 +86,9 @@ class Main extends javafx.application.Application
 		newFolder.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = desktop.addWidget(new FolderWidget)})
 		val json = new Button("Desktop To JSON")
 		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = println(desktop.toJSON + "\n\n")})
-		devToolbar.getChildren.addAll(newFolder, json)
+		val cnct = new Button("Connect to self")
+		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", 19265)})
+		devToolbar.getChildren.addAll(newFolder, json, cnct)
 
 		mainPanel.getChildren.add(devToolbar)
 

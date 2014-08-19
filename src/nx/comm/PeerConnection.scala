@@ -1,32 +1,52 @@
 package nx.comm
 
-import java.net.{SocketTimeoutException, InetSocketAddress, Socket}
+import java.net.{InetSocketAddress, Socket}
+
+import nx.Main
 
 class PeerConnection
 {
+	def this(_host: String, _port: Int) =
+	{
+		this
+		Main.run(connect(_host, _port))
+	}
 	def this(_socket: Socket) =
 	{
 		this
 		receiveConnection(_socket)
 	}
+
 	var socket: Socket = null
-	val incoming = new StringBuffer
-	val outgoing = new StringBuffer
 	var recycleable = false
 
-	def makeConnection(_host: String, _port: Int): Boolean =
+	private val incoming = new StringBuffer
+	private val outgoing = new StringBuffer
+	private def appendToIncoming(_str: String) = synchronized{incoming.append(_str)}
+	private def appendToOutgoing(_str: String) = synchronized{outgoing.append(_str)}
+	def getNextIncomingMsg: String = synchronized{poll(incoming, true)}
+	def getNextOutgoingMsg: String = synchronized{poll(outgoing)}
+	private def poll(_buf: StringBuffer, _truncateEM: Boolean = false): String =
+	{
+		if (_buf.indexOf("|EM") == -1)
+			""
+		else
+		{
+			val a = new Array[Char](_buf.indexOf("|EM") + 3)
+			_buf.getChars(0, a.length, a, 0)
+			_buf.delete(0, a.length)
+			new String(a).substring(0, if (_truncateEM) a.length - 3 else a.length)
+		}
+	}
+
+	def connect(_host: String, _port: Int) =
 	{
 		socket = new Socket
 		try
 		{
 			socket.connect(new InetSocketAddress(_host, _port), 5000)
-			true
-		} catch
-		{
-			case e: SocketTimeoutException =>
-				recycleable = true
-				false
-		}
+			send("gimme")
+		} catch {case e: Exception => dispose}
 	}
 
 	def receiveConnection(_socket: Socket) =
@@ -34,52 +54,31 @@ class PeerConnection
 		socket = _socket
 	}
 
-	def handshake =
-	{
-
-	}
-
 	def processTraffic =
 	{
 		try
 		{
-			if (socket.getInputStream.available > 0)
+			while (socket.getInputStream.available > 0)
 			{
 				val data = new Array[Byte](socket.getInputStream.available)
 				socket.getInputStream.read(data)
-				incoming.append(new String(data))
+				appendToIncoming(new String(data))
 			}
-			if (outgoing.length > 0)
+
+			var outMsg = getNextOutgoingMsg
+			while(outMsg.length > 0)
 			{
-				val toWrite = new Array[Char](outgoing.length)
-				outgoing.getChars(0, toWrite.length - 1, toWrite, 0)
-				socket.getOutputStream.write(new String(toWrite).getBytes)
+				socket.getOutputStream.write(outMsg.getBytes)
+				outMsg = getNextOutgoingMsg
 			}
-		} catch
-		{
-			case e: Exception =>
-				try socket.close
-				recycleable = true
-		}
+		} catch {case e: Exception => dispose}
 	}
 
-	def getNextMessage: String =
-	{
-		val waitUntil = System.currentTimeMillis + 2000
-		while (!incoming.toString.contains("|EM") && System.currentTimeMillis < waitUntil)
-			Thread.sleep(5)
-		if (incoming.indexOf("|EM") == -1)
-			""
-		else
-		{
-			val toReturn = new Array[Char](incoming.indexOf("|EM"))
-			incoming.getChars(0, toReturn.length - 1, toReturn, 0)
-			new String(toReturn)
-		}
-	}
+	def send(_str: String) = appendToOutgoing(_str + "|EM")
 
 	def dispose =
 	{
-		try socket.close
+		recycleable = true
+		try socket.close catch{case e: Exception =>}
 	}
 }

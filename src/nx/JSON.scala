@@ -163,6 +163,8 @@ case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None
 		null
 	}
 
+	def condensed: String = JSON.condense(toString)
+
 	override def toString: String =
 	{
 		val toReturn = new StringBuilder

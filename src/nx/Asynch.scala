@@ -11,7 +11,8 @@ trait Asynch
 		done = false
 		while (running)
 			try code() catch{case e=>}
-		callback()
+		if (callback != null)
+			callback()
 		done = true
 	})
 	def stop = running = false
