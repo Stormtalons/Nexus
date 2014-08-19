@@ -2,6 +2,8 @@ package nx
 
 trait Asynch
 {
+	import Main._
+
 	private var running = false
 	var done = true
 	var code: () => Unit
@@ -10,7 +12,8 @@ trait Asynch
 		running = true
 		done = false
 		while (running)
-			try code() catch{case e=>println(e.getMessage);}
+			if (code != null)
+				try code() catch{case e=> log(e.getMessage);e.printStackTrace}
 		if (callback != null)
 			callback()
 		done = true

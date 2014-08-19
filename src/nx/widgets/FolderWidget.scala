@@ -21,6 +21,7 @@ import scala.reflect.ClassTag
 
 class FolderWidget extends Widget
 {
+
 	getStyleClass.add("folderWidget")
 
 	def this(_name: String) =
@@ -254,25 +255,17 @@ class FolderWidget extends Widget
 		toReturn += JSON("type", "FolderWidget")
 		toReturn += JSON("name", name)
 		toReturn += JSON("expanded", isExpanded.toString)
-		val img = JSON()
-		img += JSON("width", background.getWidth.toString)
-		img += JSON("height", background.getHeight.toString)
+		if (background != null)
+		{
+			val img = JSON()
+			img += JSON("width", background.getWidth.toString)
+			img += JSON("height", background.getHeight.toString)
+			val sb = new StringBuilder
+			ImageIO.write(SwingFXUtils.fromFXImage(background, null), "jpg", new OutputStream {def write(_i: Int) = sb.append(_i).append(',')})
+			img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
+			toReturn += JSON("background", img)
+		}
 
-//		val pr = background.getPixelReader
-//		var bytes = new Array[Byte](background.getWidth.toInt * background.getHeight.toInt * 4)
-//		var bytes = new Array[Byte](786432)
-//		for (i <- 0 to background.getHeight.toInt - 1)
-//			for (j <- 0 to background.getWidth.toInt - 1)
-//				ints += pr.getArgb(j, i) //returns an int
-//		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, background.getWidth.toInt)
-		val sb = new StringBuilder
-		ImageIO.write(SwingFXUtils.fromFXImage(background, null), "png", new OutputStream {
-			def write(b: Int) = sb.append(b).append(',')
-		})
-//		for (b <- bytes)
-//			sb.append(b + ",")
-		img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
-		toReturn += JSON("background", img)
 
 		val widgets = new ArrayBuffer[JSON]
 		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)

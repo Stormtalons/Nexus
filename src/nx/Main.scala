@@ -1,13 +1,16 @@
 package nx
 
+import java.io.ByteArrayInputStream
 import java.nio.file.{Files, Paths}
 import javafx.application.Platform
+import javafx.embed.swing.SwingFXUtils
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.Scene
 import javafx.scene.control.Button
-import javafx.scene.image.{Image, PixelFormat, WritableImage}
+import javafx.scene.image.Image
 import javafx.scene.layout.{AnchorPane, HBox, VBox}
 import javafx.stage.{Stage, Window, WindowEvent}
+import javax.imageio.ImageIO
 
 import nx.comm.PeerManager
 import nx.widgets.FolderWidget
@@ -27,7 +30,14 @@ case class Repeat(_val: AnyVal)
 
 object Main extends App
 {
-	val fn = 2
+	implicit def strToByteArray(_str: String): Array[Byte] = _str.getBytes("UTF-8")
+	implicit def byteArrayToStr(_bytes: Array[Byte]): String = new String(_bytes, "UTF-8")
+	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
+
+	val sep = "<@@>"
+	val eom = sep + "EM"
+	val bufferSize = 8192
+	def eom(_i: Int): Char = eom.charAt(_i)
 	var window: Window = null
 	var desktopPanel: AnchorPane = null
 	var desktop_ : FolderWidget = null
@@ -39,8 +49,7 @@ object Main extends App
 		desktop_ = _fw
 		desktopPanel.getChildren.add(0, desktop_)
 	}
-//	def setDesktopBackground(_file: String) = desktop.setStyle("-fx-background-image: url(\"" + _file + "\")")
-	def setDesktopBackground(_file: String) = {println(_file);desktop.background = new Image(_file)}
+	def setDesktopBackground(_file: String) = desktop.background = new Image(_file)
 	
 	new Main().launch
 	
@@ -54,20 +63,14 @@ object Main extends App
 	def loadState(_json: JSON) =
 	{
 		fx({
-			println("loading state")
+			log("loading state")
 			desktop = new FolderWidget(_json.get[String]("name"))
 			val bg = _json.get[JSON]("background")
-			val w = bg.get[String]("width").toDouble.toInt
-			val h = bg.get[String]("height").toDouble.toInt
-			val data = bg.get[String]("data")
-			Files.write(Paths.get("temp.txt"), data.getBytes)
-			var temp = data.split(",")
-			var bytes = new Array[Byte](temp.length)
-			for (i <- 0 to temp.length - 1)
-				bytes(i) = temp(i).toByte
-			val bgimg = new WritableImage(w, h)
-			bgimg.getPixelWriter.setPixels(0, 0, w, h, PixelFormat.getByteBgraInstance, bytes, 0, w)
-			desktop.background = bgimg
+			if (bg != null)
+			{
+				val data = bg.get[String]("data")
+				desktop.background = SwingFXUtils.toFXImage(ImageIO.read(new ByteArrayInputStream(data.split(",").map(_.toByte))), null)
+			}
 			AnchorPane.setLeftAnchor(desktop, 0d)
 			AnchorPane.setRightAnchor(desktop, 0d)
 			AnchorPane.setTopAnchor(desktop, 0d)
@@ -78,15 +81,20 @@ object Main extends App
 		})
 	}
 
+	def log(_str: String) =
+	{
+		println("Logger: " + _str)
+	}
+
 	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
 	def fx(code: => Unit) = Platform.runLater(new Runnable {def run = code})
 }
 
 class Main extends javafx.application.Application
 {
+	import nx.Main._
+
 	def launch = javafx.application.Application.launch()
-	def desktop = Main.desktop
-	def desktop_=(_fw: FolderWidget) = Main.desktop = _fw
 
 	var peerManager: PeerManager = null
 
@@ -94,14 +102,14 @@ class Main extends javafx.application.Application
 
 	def start(stg: Stage)
 	{
-		Main.window = stg
+		window = stg
 		mainPanel = new VBox
 
-		Main.desktopPanel = new AnchorPane
-		mainPanel.getChildren.add(Main.desktopPanel)
+		desktopPanel = new AnchorPane
+		mainPanel.getChildren.add(desktopPanel)
 
 		desktop = new FolderWidget("Desktop")
-		Main.setDesktopBackground("/nx/res/background.png")
+		setDesktopBackground("/nx/res/background.png")
 		AnchorPane.setLeftAnchor(desktop, 0d)
 		AnchorPane.setRightAnchor(desktop, 0d)
 		AnchorPane.setTopAnchor(desktop, 0d)
@@ -114,11 +122,11 @@ class Main extends javafx.application.Application
 		val newFolder = new Button("Add Folder")
 		newFolder.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = desktop.addWidget(new FolderWidget)})
 		val json = new Button("Desktop To JSON")
-		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = println(desktop.toJSON + "\n\n")})
+		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = log(desktop.toJSON + "\n\n")})
 		val cnct = new Button("Connect to self")
 		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", 19265)})
 		val test = new Button("Test")
-		test.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Files.write(Paths.get("test.txt"), ("DESKTOP|" + Main.serialize + "|EM").getBytes)})
+		test.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Files.write(Paths.get("test.txt"), "DESKTOP" + sep + serialize + eom)})
 		devToolbar.getChildren.addAll(newFolder, json, cnct, test)
 
 		mainPanel.getChildren.add(devToolbar)

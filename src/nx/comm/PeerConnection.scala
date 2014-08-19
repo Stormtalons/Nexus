@@ -1,16 +1,17 @@
 package nx.comm
 
-import java.io.{File, FileOutputStream}
-import java.net.{InetSocketAddress, Socket}
+import java.net.{SocketTimeoutException, InetSocketAddress, Socket}
 
 import nx.Main
 
 class PeerConnection
 {
+	import Main._
+
 	def this(_host: String, _port: Int) =
 	{
 		this
-		Main.run(connect(_host, _port))
+		run(connect(_host, _port))
 	}
 	def this(_socket: Socket) =
 	{
@@ -23,22 +24,9 @@ class PeerConnection
 
 	private val inBuffer = new MsgBuffer
 	private val outBuffer = new MsgBuffer
-	private def appendToIncoming(_str: String) = inBuffer.add(_str)
-	private def appendToOutgoing(_str: String) = outBuffer.add(_str)
-	def getNextIncomingMsg: String = inBuffer.getMsg
-	def getNextOutgoingMsg: String = outBuffer.getMsg
-	private def poll(_buf: StringBuffer, _truncateEM: Boolean = false): String =
-	{
-		if (_buf.indexOf("|EM") == -1)
-			""
-		else
-		{
-			val a = new Array[Char](_buf.indexOf("|EM") + 3)
-			_buf.getChars(0, a.length, a, 0)
-			_buf.delete(0, a.length)
-			new String(a).substring(0, if (_truncateEM) a.length - 3 else a.length)
-		}
-	}
+	def hasMsg: Boolean = inBuffer.hasMsg
+	def getMsgStr: String = if (hasMsg) inBuffer.getMsgStr else null
+	def getMsgBytes: Array[Byte] = getMsgStr
 
 	def connect(_host: String, _port: Int) =
 	{
@@ -47,7 +35,7 @@ class PeerConnection
 		{
 			socket.connect(new InetSocketAddress(_host, _port), 5000)
 			send("gimme")
-		} catch {case e: Exception => println(e.getMessage);dispose}
+		} catch {case e: SocketTimeoutException => log(e.getMessage);dispose}
 	}
 
 	def receiveConnection(_socket: Socket) =
@@ -61,39 +49,36 @@ class PeerConnection
 		{
 			while (socket.getInputStream.available > 0)
 			{
-				val data = new Array[Byte](socket.getInputStream.available)
-				socket.getInputStream.read(data)
-				val f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\folder" + Main.fn + "\\in.txt")
-				if (!f.exists)
-					f.createNewFile
-				val fw = new FileOutputStream(f, true)
-				fw.write(data)
-				fw.flush
-				fw.close
-				appendToIncoming(new String(data))
+				val data = new Array[Byte](bufferSize)
+				val read = socket.getInputStream.read(data)
+				inBuffer << data.dropRight(data.length - read)
 			}
-
-			var outMsg = getNextOutgoingMsg
-			while(outMsg.length > 0)
+			inBuffer.parseCompleteMsgs
+			while(outBuffer.hasMsg)
 			{
-				val f = new File("D:\\Code\\Java\\IntelliJ\\Nexus\\folder" + Main.fn + "\\out.txt")
-				if (!f.exists)
-					f.createNewFile
-				val fw = new FileOutputStream(f, true)
-				fw.write(outMsg.getBytes)
-				fw.flush
-				fw.close
-				socket.getOutputStream.write(outMsg.getBytes)
-				outMsg = getNextOutgoingMsg
+				val data = outBuffer.getMsgBytes
+				var at = 0
+				while (at < data.length)
+				{
+					socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at))
+					at += bufferSize
+				}
+				socket.getOutputStream.flush
 			}
-		} catch {case e: Exception => println(e.getMessage);dispose}
+		} catch {case e: Exception => log(e.getMessage);e.printStackTrace();dispose}
 	}
 
-	def send(_str: String) = appendToOutgoing(_str + "|EM")
+	def send(_str: String) =
+	{
+		outBuffer << _str << eom
+		outBuffer.parseCompleteMsgs
+	}
 
 	def dispose =
 	{
 		recycleable = true
-		try socket.close catch{case e: Exception =>println(e.getMessage);}
+		inBuffer.clear
+		outBuffer.clear
+		try socket.close catch{case e: Exception => log(e.getMessage)}
 	}
 }
