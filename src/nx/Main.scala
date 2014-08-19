@@ -5,7 +5,7 @@ import javafx.application.Platform
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.Scene
 import javafx.scene.control.Button
-import javafx.scene.image.{WritableImage, Image}
+import javafx.scene.image.{Image, PixelFormat, WritableImage}
 import javafx.scene.layout.{AnchorPane, HBox, VBox}
 import javafx.stage.{Stage, Window, WindowEvent}
 
@@ -61,15 +61,12 @@ object Main extends App
 			val h = bg.get[String]("height").toDouble.toInt
 			val data = bg.get[String]("data")
 			Files.write(Paths.get("temp.txt"), data.getBytes)
-			var bytes = data.split(",")
+			var temp = data.split(",")
+			var bytes = new Array[Byte](temp.length)
+			for (i <- 0 to temp.length - 1)
+				bytes(i) = temp(i).toByte
 			val bgimg = new WritableImage(w, h)
-			var counter = 0
-			for (i <- 0 to h - 1)
-				for (j <- 0 to w - 1)
-				{
-					bgimg.getPixelWriter.setArgb(j, i, bytes(counter).toInt)
-					counter += 1
-				}
+			bgimg.getPixelWriter.setPixels(0, 0, w, h, PixelFormat.getByteBgraInstance, bytes, 0, w)
 			desktop.background = bgimg
 			AnchorPane.setLeftAnchor(desktop, 0d)
 			AnchorPane.setRightAnchor(desktop, 0d)

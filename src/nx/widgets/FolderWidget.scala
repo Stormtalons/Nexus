@@ -1,7 +1,8 @@
 package nx.widgets
 
 import java.awt.Desktop
-import java.io.File
+import java.io.{File, OutputStream}
+import javafx.embed.swing.SwingFXUtils
 import javafx.event.{ActionEvent, EventHandler}
 import javafx.geometry.{HPos, Pos, VPos}
 import javafx.scene.Node
@@ -10,6 +11,7 @@ import javafx.scene.image.Image
 import javafx.scene.input._
 import javafx.scene.layout._
 import javafx.stage.FileChooser
+import javax.imageio.ImageIO
 
 import nx.settings.StringSetting
 import nx.{JSON, Main}
@@ -255,15 +257,20 @@ class FolderWidget extends Widget
 		val img = JSON()
 		img += JSON("width", background.getWidth.toString)
 		img += JSON("height", background.getHeight.toString)
-		val pr = background.getPixelReader
-		var ints = new ArrayBuffer[Int]
-		for (i <- 0 to background.getHeight.toInt - 1)
-			for (j <- 0 to background.getWidth.toInt - 1)
-				ints += pr.getArgb(j, i) //returns an int
-//		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, 0)
+
+//		val pr = background.getPixelReader
+//		var bytes = new Array[Byte](background.getWidth.toInt * background.getHeight.toInt * 4)
+//		var bytes = new Array[Byte](786432)
+//		for (i <- 0 to background.getHeight.toInt - 1)
+//			for (j <- 0 to background.getWidth.toInt - 1)
+//				ints += pr.getArgb(j, i) //returns an int
+//		pr.getPixels(0, 0, background.getWidth.toInt, background.getHeight.toInt, PixelFormat.getByteBgraInstance, bytes, 0, background.getWidth.toInt)
 		val sb = new StringBuilder
-		for (i <- ints)
-			sb.append(i + ",")
+		ImageIO.write(SwingFXUtils.fromFXImage(background, null), "png", new OutputStream {
+			def write(b: Int) = sb.append(b).append(',')
+		})
+//		for (b <- bytes)
+//			sb.append(b + ",")
 		img += JSON("data", sb.deleteCharAt(sb.length - 1).toString)
 		toReturn += JSON("background", img)
 

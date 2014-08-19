@@ -21,12 +21,12 @@ class PeerConnection
 	var socket: Socket = null
 	var recycleable = false
 
-	private val incoming = new StringBuffer
-	private val outgoing = new StringBuffer
-	private def appendToIncoming(_str: String) = synchronized{incoming.append(_str)}
-	private def appendToOutgoing(_str: String) = synchronized{outgoing.append(_str)}
-	def getNextIncomingMsg: String = synchronized{poll(incoming, true)}
-	def getNextOutgoingMsg: String = synchronized{poll(outgoing)}
+	private val inBuffer = new MsgBuffer
+	private val outBuffer = new MsgBuffer
+	private def appendToIncoming(_str: String) = inBuffer.add(_str)
+	private def appendToOutgoing(_str: String) = outBuffer.add(_str)
+	def getNextIncomingMsg: String = inBuffer.getMsg
+	def getNextOutgoingMsg: String = outBuffer.getMsg
 	private def poll(_buf: StringBuffer, _truncateEM: Boolean = false): String =
 	{
 		if (_buf.indexOf("|EM") == -1)
