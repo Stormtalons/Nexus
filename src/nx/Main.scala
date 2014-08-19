@@ -5,10 +5,23 @@ import javafx.event.{ActionEvent, EventHandler}
 import javafx.scene.Scene
 import javafx.scene.control.Button
 import javafx.scene.layout.{AnchorPane, HBox, VBox}
-import javafx.stage.{WindowEvent, Stage, Window}
+import javafx.stage.{Stage, Window, WindowEvent}
 
 import nx.comm.PeerManager
 import nx.widgets.FolderWidget
+
+object Repeat
+{
+	implicit def toRpt(_val: Byte) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: Int) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: Long) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: Float) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: Double) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: Char) = Repeat(_val.asInstanceOf[AnyVal])
+	implicit def toRpt(_val: String) = Repeat(_val.asInstanceOf[AnyVal])
+}
+case class Repeat(_val: AnyVal)
+{def ^(_i: Int): String = {var s = _val.toString;for (i <- 2 to _i) s+=_val;s}}
 
 object Main extends App
 {

@@ -2,9 +2,17 @@
   <profile version="1.0" is_locked="false">
     <option name="myName" value="Project Default" />
     <option name="myLocal" value="false" />
+    <inspection_tool class="AccessStaticViaInstance" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AccessorLikeMethodIsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AccessorLikeMethodIsUnit" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AmbiguousMethodCall" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ApparentRefinementOfResultType" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AppliedTypeLambdaCanBeSimplified" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="BooleanConstructor" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="CallToNativeMethodWhileLocked" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ConvertibleToMethodValue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DangerousCatchAll" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DoubleNegation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="EmptyCatchBlock" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_includeComments" value="true" />
       <option name="m_ignoreTestCases" value="true" />
@@ -12,22 +20,70 @@
     </inspection_tool>
     <inspection_tool class="EmptyParenMethodAccessedAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="EmptyParenMethodOverridenAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="FieldHidesSuperclassField" enabled="true" level="INFO" enabled_by_default="true">
+      <option name="m_ignoreInvisibleFields" value="true" />
+    </inspection_tool>
+    <inspection_tool class="FloatLiteralEndingWithDecimalPoint" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="GroovyUnusedCatchParameter" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="InnerClassVariableHidesOuterClassVariable" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreInvisibleFields" value="true" />
+    </inspection_tool>
     <inspection_tool class="JavaAccessorMethodCalledAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JavaAccessorMethodOverridenAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JavaMutatorMethodAccessedAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="JavaMutatorMethodOverridenAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="LambdaParameterHidingMemberVariable" enabled="true" level="INFO" enabled_by_default="true" />
+    <inspection_tool class="LengthOneStringInIndexOf" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LengthOneStringsInConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LocalVariableHidingMemberVariable" enabled="true" level="INFO" enabled_by_default="true">
+      <option name="m_ignoreInvisibleFields" value="true" />
+      <option name="m_ignoreStaticMethods" value="true" />
+    </inspection_tool>
+    <inspection_tool class="LoggerInitializedWithForeignClass" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger" />
+      <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
+    </inspection_tool>
+    <inspection_tool class="LoopVariableNotUpdated" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MapGetOrElse" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MatchToPartialFunction" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MutatorLikeMethodIsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NameBooleanParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NestedSynchronizedStatement" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="NotImplementedCode" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NotIsEmpty" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ParameterlessMemberOverridenAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="RedundantBlock" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="RemoveRedundantReturn" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocInlinedTag" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocMissingParameterDescription" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocUnbalancedHeader" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocUnclosedTagWithoutParser" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocUnknownParameter" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaDocUnknownTag" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaMalformedFormatString" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaPackageName" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ScalaUnnecessarySemicolon" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SillyAssignment" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SocketResource" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="insideTryAllowed" value="false" />
+    </inspection_tool>
     <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
       <option name="processCode" value="true" />
       <option name="processLiterals" value="true" />
       <option name="processComments" value="true" />
     </inspection_tool>
+    <inspection_tool class="StringBufferToStringInConcatenation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="StringConcatenationInLoops" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="m_ignoreUnlessAssigned" value="true" />
+    </inspection_tool>
+    <inspection_tool class="StringEqualsEmptyString" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="TailRecursion" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ThreadStartInConstruction" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ThreadWithDefaultRunMethod" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="ToArrayCallWithZeroLengthArrayArgument" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="TypeCheckCanBeMatch" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnitMethodIsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="VarCouldBeVal" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="WrongPackageStatement" enabled="false" level="ERROR" enabled_by_default="false" />
   </profile>
 </component>

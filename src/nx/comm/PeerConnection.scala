@@ -34,6 +34,11 @@ class PeerConnection
 		socket = _socket
 	}
 
+	def handshake =
+	{
+
+	}
+
 	def processTraffic =
 	{
 		try
@@ -53,13 +58,16 @@ class PeerConnection
 		} catch
 		{
 			case e: Exception =>
-				try socket.close catch{case e =>}
+				try socket.close
 				recycleable = true
 		}
 	}
 
 	def getNextMessage: String =
 	{
+		val waitUntil = System.currentTimeMillis + 2000
+		while (!incoming.toString.contains("|EM") && System.currentTimeMillis < waitUntil)
+			Thread.sleep(5)
 		if (incoming.indexOf("|EM") == -1)
 			""
 		else
@@ -68,5 +76,10 @@ class PeerConnection
 			incoming.getChars(0, toReturn.length - 1, toReturn, 0)
 			new String(toReturn)
 		}
+	}
+
+	def dispose =
+	{
+		try socket.close
 	}
 }

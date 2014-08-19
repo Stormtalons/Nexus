@@ -17,6 +17,17 @@ class PeerManager extends Asynch
 
 	var code = () =>
 	{
+		var i = 0
+		while (i < peers.length)
+		{
+			if (peers(i).recycleable)
+			{
+				peers(i).dispose
+				peers.remove(i)
+				i = -1
+			}
+			i += 1
+		}
 		peers.foreach(_p => _p.processTraffic)
 		Thread.sleep(1)
 	}
