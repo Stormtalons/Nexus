@@ -1,0 +1,33 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0" is_locked="false">
+    <option name="myName" value="Project Default" />
+    <option name="myLocal" value="false" />
+    <inspection_tool class="AccessorLikeMethodIsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="AccessorLikeMethodIsUnit" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="DangerousCatchAll" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="EmptyCatchBlock" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="m_includeComments" value="true" />
+      <option name="m_ignoreTestCases" value="true" />
+      <option name="m_ignoreIgnoreParameter" value="true" />
+    </inspection_tool>
+    <inspection_tool class="EmptyParenMethodAccessedAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="EmptyParenMethodOverridenAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="GroovyUnusedCatchParameter" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavaAccessorMethodCalledAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavaAccessorMethodOverridenAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavaMutatorMethodAccessedAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="JavaMutatorMethodOverridenAsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MatchToPartialFunction" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="MutatorLikeMethodIsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NameBooleanParameters" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ParameterlessMemberOverridenAsEmptyParen" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="ScalaUnnecessarySemicolon" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="SpellCheckingInspection" enabled="false" level="TYPO" enabled_by_default="false">
+      <option name="processCode" value="true" />
+      <option name="processLiterals" value="true" />
+      <option name="processComments" value="true" />
+    </inspection_tool>
+    <inspection_tool class="TypeCheckCanBeMatch" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UnitMethodIsParameterless" enabled="false" level="WARNING" enabled_by_default="false" />
+  </profile>
+</component>

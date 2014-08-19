@@ -1,0 +1,8 @@
+.widget {
+    -fx-border-color: transparent;
+    -fx-border-style: solid;
+    -fx-border-width: 2px;
+}
+.widget :focused{
+    -fx-border-color: royalblue;
+}
