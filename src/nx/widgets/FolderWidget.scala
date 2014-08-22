@@ -40,9 +40,9 @@ class FolderWidget extends Widget
 	def background_=(_img: Image) =
 	{
 		background_ = _img
-		setBackground(new Background(new BackgroundImage(background_,
-														BackgroundRepeat.NO_REPEAT,
-														BackgroundRepeat.NO_REPEAT,
+		widgets.setBackground(new Background(new BackgroundImage(background_,
+														BackgroundRepeat.REPEAT,
+														BackgroundRepeat.REPEAT,
 														BackgroundPosition.DEFAULT,
 														BackgroundSize.DEFAULT)))
 	}
@@ -106,12 +106,12 @@ class FolderWidget extends Widget
 		}
 		_evt.consume
 	}})
-	def getWidgets[T <: Widget:ClassTag]: Array[T] =
+	def getWidgets[T <: Widget:ClassTag]: ArrayBuffer[T] =
 	{
-		var toReturn = Array[T]()
+		var toReturn = new ArrayBuffer[T]
 		for (i <- 0 to widgets.getChildren.size - 1)
 			widgets.getChildren.get(i) match {
-				case _t: T => toReturn = toReturn :+ _t
+				case _t: T => toReturn += _t
 				case _ =>
 			}
 		toReturn
@@ -232,14 +232,14 @@ class FolderWidget extends Widget
 	protected val widgetMenu = new ContextMenu
 	protected val addFolder = new MenuItem("Add Folder")
 	addFolder.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = addWidget(new FolderWidget("New Folder"))})
-	protected val setBackground = new MenuItem("Choose Background")
-	setBackground.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) =
+	protected val setBackgroundItem = new MenuItem("Choose Background")
+	setBackgroundItem.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) =
 	{
 		val bg = new FileChooser().showOpenDialog(window)
 		if (bg != null)
-			setDesktopBackground(bg.toURI.toURL.toString)
+			background = new Image(bg.toURI.toURL.toString)
 	}})
-	widgetMenu.getItems.addAll(addFolder, setBackground)
+	widgetMenu.getItems.addAll(addFolder, setBackgroundItem)
 	widgets.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
 		if (_evt.getSource.isInstanceOf[Node])
 		{
@@ -257,9 +257,11 @@ class FolderWidget extends Widget
 		if (background != null)
 			toReturn += JSON("background", (background: Array[Byte]).mkString(","))
 
-		val widgets = new ArrayBuffer[JSON]
-		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)
-		toReturn += JSON("widgets", widgets)
+//		val widgets = new ArrayBuffer[JSON]
+//		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)
+		val widgets = getWidgets[Widget]
+		if (widgets.length > 0)
+			toReturn += JSON("widgets", widgets.map(_.toJSON): ArrayBuffer[JSON])
 
 		toReturn
 	}

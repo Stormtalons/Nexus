@@ -143,23 +143,24 @@ case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None
 	private var indent_ = ""
 	def indentStr: String = indent_
 	def indent: Int = indentStr.length
-	def indent_= (amt: Int) =
+	def indent_= (_amt: Int) =
 	{
 		indent_ = ""
-		for (i <- 0 to amt - 1)
+		for (i <- 0 to _amt - 1)
 			indent_ += "\t"
 	}
 	
 	def +=(_key: String, _val: AnyRef): Unit = +=(JSON(_key, _val))
 	def +=(_json: JSON): Unit = values += _json
-	def get(i: Int): AnyRef =
-		if (i < values.length)
-			values(i).value
+	def get(_i: Int): AnyRef =
+		if (_i < values.length)
+			values(_i).value
 		else
 			null
-	def get[T >: Null](key: String): T =
+	def has[T >: Null](_key: String): Boolean = get[T](_key) != null
+	def get[T >: Null](_key: String): T =
 	{
-		values.foreach(v => if (v.label.equals(key) && v.value.isInstanceOf[T]) return v.value.asInstanceOf[T])
+		values.foreach(_v => if (_v.label.equals(_key) && _v.value.isInstanceOf[T]) return _v.value.asInstanceOf[T])
 		null
 	}
 

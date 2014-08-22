@@ -1,6 +1,6 @@
 package nx
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.file.{Files, Paths}
 import javafx.application.Platform
 import javafx.embed.swing.SwingFXUtils
@@ -13,7 +13,9 @@ import javafx.stage.{Stage, Window, WindowEvent}
 import javax.imageio.ImageIO
 
 import nx.comm.PeerManager
-import nx.widgets.FolderWidget
+import nx.widgets.{FileWidget, FolderWidget}
+
+import scala.collection.mutable.ArrayBuffer
 
 object Repeat
 {
@@ -41,6 +43,9 @@ object Main extends App
 		baos.toByteArray
 	}
 
+	//Development flags
+	val useConfig = false
+
 	val sep = "<@@>"
 	val eom = sep + "EM"
 	val bufferSize = 8192
@@ -55,38 +60,48 @@ object Main extends App
 			desktopPanel.getChildren.remove(desktop_)
 		desktop_ = _fw
 		desktopPanel.getChildren.add(0, desktop_)
+		AnchorPane.setLeftAnchor(desktop_, 0d)
+		AnchorPane.setRightAnchor(desktop_, 0d)
+		AnchorPane.setTopAnchor(desktop_, 0d)
+		AnchorPane.setBottomAnchor(desktop_, 0d)
+		desktop_.confirmConstraintsFor(5, 10)
+		desktop_.expand(false)
+		desktop_.setPrefSize(1024, 768)
 	}
 	def setDesktopBackground(_file: String) = desktop.background = new Image(_file)
 	
 	new Main().launch
 	
 	def serialize: String = desktop.toJSON.condensed
-
-	def saveState =
-	{
-
-	}
-
-	def loadState(_json: JSON) =
-	{
-		fx({
-			desktop = new FolderWidget(_json.get[String]("name"))
-			val bg = _json.get[String]("background")
-			if (bg != null)
-				desktop.background = bg.split(",").map(_.toByte)
-			AnchorPane.setLeftAnchor(desktop, 0d)
-			AnchorPane.setRightAnchor(desktop, 0d)
-			AnchorPane.setTopAnchor(desktop, 0d)
-			AnchorPane.setBottomAnchor(desktop, 0d)
-			desktop.confirmConstraintsFor(5, 10)
-			desktop.expand(false)
-			desktop.setPrefSize(1024, 768)
-		})
-	}
+	def saveState = if (useConfig) Files.write(Paths.get("config.ini"), serialize)
+	def loadState(_json: JSON) = fx({
+		desktop = new FolderWidget(_json.get[String]("name"))
+		val bg = _json.get[String]("background")
+		if (bg != null)
+			desktop.background = _json.get[String]("background").split(",").map(_.toByte)
+		def addWidgets(_parent: FolderWidget, _widgets: ArrayBuffer[JSON]): Unit =
+			for (_w <- _widgets)
+				if (!_w.has[String]("type"))
+					println("JSON:\n" + _json)
+				else if (_w.get[String]("type").equals("FolderWidget"))
+				{
+					val fw = new FolderWidget(_w.get[String]("name"))
+					_parent.addWidget(fw)
+					if (_w.has[ArrayBuffer[JSON]]("widgets"))
+						addWidgets(fw, _w.get[ArrayBuffer[JSON]]("widgets"))
+				}
+				else if (_w.get[String]("type").equals("FileWidget"))
+				{
+					val fw = new FileWidget(new File(_w.get[String]("file")))
+					_parent.addWidget(fw)
+				}
+		if (_json.has[ArrayBuffer[JSON]]("widgets"))
+			addWidgets(desktop, _json.get[ArrayBuffer[JSON]]("widgets"))
+	})
 
 	def log(_str: String) = println("Logger: " + _str)
 	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
-	def fx(code: => Unit) = Platform.runLater(new Runnable {def run = code})
+	def fx(code: => Unit) = if (Platform.isFxApplicationThread) code else Platform.runLater(new Runnable {def run = code})
 }
 
 class Main extends javafx.application.Application
@@ -107,15 +122,13 @@ class Main extends javafx.application.Application
 		desktopPanel = new AnchorPane
 		mainPanel.getChildren.add(desktopPanel)
 
-		desktop = new FolderWidget("Desktop")
-		setDesktopBackground("/nx/res/background.png")
-		AnchorPane.setLeftAnchor(desktop, 0d)
-		AnchorPane.setRightAnchor(desktop, 0d)
-		AnchorPane.setTopAnchor(desktop, 0d)
-		AnchorPane.setBottomAnchor(desktop, 0d)
-		desktop.confirmConstraintsFor(5, 10)
-		desktop.expand(false)
-		desktop.setPrefSize(1024, 768)
+		if (Files.exists(Paths.get("config.ini")) && useConfig)
+			loadState(Files.readAllBytes(Paths.get("config.ini")): String)
+		else
+		{
+			desktop = new FolderWidget("Desktop")
+			setDesktopBackground("/nx/res/background.png")
+		}
 
 		val devToolbar = new HBox
 		val newFolder = new Button("Add Folder")
@@ -130,7 +143,11 @@ class Main extends javafx.application.Application
 
 		mainPanel.getChildren.add(devToolbar)
 
-		stg.addEventFilter(WindowEvent.WINDOW_HIDING, new EventHandler[WindowEvent]{def handle(_evt: WindowEvent) = peerManager.stop})
+		stg.addEventFilter(WindowEvent.WINDOW_HIDING, new EventHandler[WindowEvent]{def handle(_evt: WindowEvent) =
+		{
+			peerManager.stop
+			saveState
+		}})
 		stg.setScene(new Scene(mainPanel))
 		stg.show
 

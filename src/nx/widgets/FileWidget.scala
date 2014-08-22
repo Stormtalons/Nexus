@@ -38,7 +38,7 @@ class FileWidget(_file: File) extends Widget with Content[File]
 		val toReturn = JSON()
 
 		toReturn += JSON("type", "FileWidget")
-		toReturn += JSON("name", fileName)
+		toReturn += JSON("name", fileName.value)
 		toReturn += JSON("file", content.getPath)
 
 		toReturn
