@@ -1,12 +1,10 @@
 package nx.comm
 
-import java.net.{SocketTimeoutException, InetSocketAddress, Socket}
-
-import nx.Main
+import java.net.{InetSocketAddress, Socket}
 
 class PeerConnection
 {
-	import Main._
+	import nx.Main._
 
 	def this(_host: String, _port: Int) =
 	{
@@ -16,62 +14,77 @@ class PeerConnection
 	def this(_socket: Socket) =
 	{
 		this
-		receiveConnection(_socket)
+		connect(_socket)
 	}
 
-	var socket: Socket = null
+	var socket_ = new Socket
+	def socket = socket_
+	def socket_=(_socket: Socket) =
+	{
+		recycleable = false
+		inBuffer.clear
+		outBuffer.clear
+		close
+		socket_ = _socket
+	}
+
 	var recycleable = false
 
 	private val inBuffer = new MsgBuffer
 	private val outBuffer = new MsgBuffer
 	def hasMsg: Boolean = inBuffer.hasMsg
-	def getMsgStr: String = if (hasMsg) inBuffer.getMsgStr else null
-	def getMsgBytes: Array[Byte] = getMsgStr
+	def getMsg: String = if (hasMsg) inBuffer.getMsg else null
+	def hasObj[T <: Sendable[T]](_key: String): Boolean = inBuffer.hasObj[T](_key)
+	def getObj[T <: Sendable[T]](_key: String): T = inBuffer.getObj[T](_key)
 
+	def connect(_socket: Socket) = socket = _socket
 	def connect(_host: String, _port: Int) =
-	{
-		socket = new Socket
 		try
 		{
+			close
 			socket.connect(new InetSocketAddress(_host, _port), 5000)
-			send("gimme")
-		} catch {case e: SocketTimeoutException => log(e.getMessage);dispose}
-	}
-
-	def receiveConnection(_socket: Socket) =
-	{
-		socket = _socket
-	}
-
-	def processTraffic =
-	{
-		try
+			sendMsg("gimme")
+			recycleable = false
+		}
+		catch
 		{
-			while (socket.getInputStream.available > 0)
+			case e: Exception =>
+				log(e.getMessage)
+				dispose
+		}
+
+	def processTraffic: Unit =
+	{
+		while (socket.getInputStream.available > 0)
+		{
+			val data = new Array[Byte](bufferSize)
+			var read = 0
+			if (!tryy({read = socket.getInputStream.read(data)}, _e => {log(_e.getMessage);dispose}))
+				return
+			inBuffer << data.dropRight(data.length - read)
+		}
+		inBuffer.parseMsgs
+		while (outBuffer.hasObj)
+		{
+
+		}
+		while (outBuffer.hasMsg)
+		{
+			val data: Array[Byte] = outBuffer.getMsg
+			var at = 0
+			while (at < data.length)
 			{
-				val data = new Array[Byte](bufferSize)
-				val read = socket.getInputStream.read(data)
-				inBuffer << data.dropRight(data.length - read)
+				if (!tryy(socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at)), _e => {log(_e.getMessage);dispose}))
+					return
+				at += bufferSize
 			}
-			inBuffer.parseCompleteMsgs
-			while(outBuffer.hasMsg)
-			{
-				val data = outBuffer.getMsgBytes
-				var at = 0
-				while (at < data.length)
-				{
-					socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at))
-					at += bufferSize
-				}
-				socket.getOutputStream.flush
-			}
-		} catch {case e: Exception => log(e.getMessage);e.printStackTrace();dispose}
+		}
 	}
 
-	def send(_str: String) =
+	def sendMsg(_str: String) =
 	{
 		outBuffer << _str << eom
-		outBuffer.parseCompleteMsgs
+		outBuffer.parseMsgs
 	}
 
 	def dispose =
@@ -79,6 +92,8 @@ class PeerConnection
 		recycleable = true
 		inBuffer.clear
 		outBuffer.clear
-		try socket.close catch{case e: Exception => log(e.getMessage)}
+		close
 	}
+	
+	def close = if (socket != null) tryy(socket.close)
 }

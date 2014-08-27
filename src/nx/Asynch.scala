@@ -7,7 +7,7 @@ trait Asynch
 	private var running = false
 	var done = true
 	var code: () => Unit
-	var callback: () => Unit = null
+	def callback: () => Unit = null
 	def run = Main.run({
 		running = true
 		done = false
@@ -19,4 +19,6 @@ trait Asynch
 		done = true
 	})
 	def stop = running = false
+	def waitFor = while (!done) Thread.sleep(5)
+	def stopAndWait = {stop;waitFor}
 }

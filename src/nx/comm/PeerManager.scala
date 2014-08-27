@@ -1,7 +1,5 @@
 package nx.comm
 
-import java.net.Socket
-
 import nx.Asynch
 
 import scala.collection.mutable.ArrayBuffer
@@ -9,40 +7,35 @@ import scala.collection.mutable.ArrayBuffer
 class PeerManager extends Asynch
 {
 	import nx.Main._
+	
+	val outgoingPeer = new PeerConnection
+	val clients = new ArrayBuffer[PeerConnection]
 
-	val peers = new ArrayBuffer[PeerConnection]
-	def addPeer(_peer: PeerConnection) = synchronized{peers += _peer}
-	def addPeer(_socket: Socket): Unit = addPeer(new PeerConnection(_socket))
-
-	val server = new PeerListener
-	server.start(addPeer)
-
-	def connect(_host: String, _port: Int) = addPeer(new PeerConnection(_host, _port))
+	val server = new PeerListener(_socket => synchronized{clients += new PeerConnection(_socket)})
 
 	var code = () =>
 	{
 		synchronized
 		{
 			var i = 0
-			while (i < peers.length)
+			while (i < clients.length)
 			{
-				if (peers(i).recycleable)
+				if (clients(i).recycleable)
 				{
-					peers(i).dispose
-					peers.remove(i)
+					clients.remove(i)
 					i = -1
 				}
 				i += 1
 			}
 
-			peers.foreach(_p =>
+			clients.foreach(_client =>
 			{
-				_p.processTraffic
-				while (_p.hasMsg)
+				_client.processTraffic
+				while (_client.hasMsg)
 				{
-					val msgParts = _p.getMsgStr.split("<@@>")
+					val msgParts = _client.getMsg.split(sep)
 					if (msgParts(0).equals("gimme"))
-						_p.send("DESKTOP" + (sep: String) + serialize)
+						_client.sendMsg("DESKTOP" + sep + serialize)
 					else if (msgParts(0).equals("DESKTOP"))
 						loadState(msgParts(1))
 				}
@@ -50,11 +43,15 @@ class PeerManager extends Asynch
 		}
 		Thread.sleep(100)
 	}
-	callback = () =>
+	override def callback = () =>
 	{
 		server.stop
-		peers.foreach(_p => _p.dispose)
+		outgoingPeer.dispose
+		clients.foreach(_client => _client.dispose)
+		clients.clear
 	}
+
+	def connect(_host: String, _port: Int) = outgoingPeer.connect(_host, _port)
 
 	run
 }

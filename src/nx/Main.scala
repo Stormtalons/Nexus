@@ -1,6 +1,7 @@
 package nx
 
-import java.io.{File, ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
+import java.net.ServerSocket
 import java.nio.file.{Files, Paths}
 import javafx.application.Platform
 import javafx.embed.swing.SwingFXUtils
@@ -42,9 +43,25 @@ object Main extends App
 		ImageIO.write(SwingFXUtils.fromFXImage(_img, null), "jpg", baos)
 		baos.toByteArray
 	}
+	var serverPort = 19265
 
 	//Development flags
-	val useConfig = false
+	var useConfig = true
+	var instance = 1
+	try
+	{
+		val ts = new ServerSocket(serverPort)
+		ts.close
+		println("Host instance initialized")
+	}
+	catch
+	{
+		case e: Exception =>
+			useConfig = false
+			instance = 2
+			println("Host instance initialized")
+	}
+
 
 	val sep = "<@@>"
 	val eom = sep + "EM"
@@ -102,6 +119,7 @@ object Main extends App
 	def log(_str: String) = println("Logger: " + _str)
 	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
 	def fx(code: => Unit) = if (Platform.isFxApplicationThread) code else Platform.runLater(new Runnable {def run = code})
+	def tryy(code: => Unit, exHandler: (Exception) => Unit = null): Boolean = try {code;true} catch {case e: Exception => exHandler(e);false}
 }
 
 class Main extends javafx.application.Application
@@ -136,7 +154,7 @@ class Main extends javafx.application.Application
 		val json = new Button("Desktop To JSON")
 		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = log(desktop.toJSON + "\n\n")})
 		val cnct = new Button("Connect to self")
-		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", 19265)})
+		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", serverPort)})
 		val test = new Button("Test")
 		test.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Files.write(Paths.get("test.txt"), "DESKTOP" + sep + serialize + eom)})
 		devToolbar.getChildren.addAll(newFolder, json, cnct, test)

@@ -4,24 +4,25 @@ import java.net.{SocketTimeoutException, ServerSocket, Socket}
 
 import nx.{Main, Asynch}
 
-class PeerListener extends Asynch
+class PeerListener(_callback: (Socket) => Unit) extends Asynch
 {
 	import Main._
 
-	var code: () => Unit = null
-
-	val port = 19265
 	var socket: ServerSocket = null
-	try
-	{
-		socket = new ServerSocket(port)
-		socket.setSoTimeout(5000)
-	}
-	catch{case e: Exception => log(e.getMessage)}
+	var code: () => Unit = () => tryy(try _callback(socket.accept) catch {case ste: SocketTimeoutException =>}, _e => {log(_e.getMessage);stop})
+	override def callback = () => tryy(socket.close)
 
-	def start(_callback: (Socket) => Unit) =
+	def reset: Boolean =
 	{
-		code = () => if (socket != null) try _callback(socket.accept) catch {case ste: SocketTimeoutException => case e: Exception => log(e.getMessage);stop}
-		run
+		stopAndWait
+		if (socket != null)
+			socket.close
+		tryy({
+			socket = new ServerSocket(serverPort)
+			socket.setSoTimeout(5000)
+			run
+		}, _e => log(_e.getMessage))
 	}
+
+	reset
 }
