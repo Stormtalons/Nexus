@@ -4,14 +4,13 @@ import nx.Asynch
 
 import scala.collection.mutable.ArrayBuffer
 
-class PeerManager extends Asynch
-{
-	import nx.Main._
+class ConnectionManager extends Asynch
+{import nx.Main._
 	
-	val outgoingPeer = new PeerConnection
-	val clients = new ArrayBuffer[PeerConnection]
+	val outgoingClient = new ClientConnection
+	val clients = new ArrayBuffer[ClientConnection]
 
-	val server = new PeerListener(_socket => synchronized{clients += new PeerConnection(_socket)})
+	val server = new ConnectionListener(_socket => synchronized{clients += new ClientConnection(_socket)})
 
 	var code = () =>
 	{
@@ -46,12 +45,12 @@ class PeerManager extends Asynch
 	override def callback = () =>
 	{
 		server.stop
-		outgoingPeer.dispose
+		outgoingClient.dispose
 		clients.foreach(_client => _client.dispose)
 		clients.clear
 	}
 
-	def connect(_host: String, _port: Int) = outgoingPeer.connect(_host, _port)
+	def connect(_host: String, _port: Int) = outgoingClient.connect(_host, _port)
 
 	run
 }

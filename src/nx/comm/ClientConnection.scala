@@ -2,14 +2,12 @@ package nx.comm
 
 import java.net.{InetSocketAddress, Socket}
 
-class PeerConnection
-{
-	import nx.Main._
-
+class ClientConnection
+{import nx.Main._
 	def this(_host: String, _port: Int) =
 	{
 		this
-		run(connect(_host, _port))
+		ex(connect(_host, _port))
 	}
 	def this(_socket: Socket) =
 	{
@@ -59,7 +57,7 @@ class PeerConnection
 		{
 			val data = new Array[Byte](bufferSize)
 			var read = 0
-			if (!tryy({read = socket.getInputStream.read(data)}, _e => {log(_e.getMessage);dispose}))
+			if (!t({read = socket.getInputStream.read(data)}, _e => {log(_e.getMessage);dispose}))
 				return
 			inBuffer << data.dropRight(data.length - read)
 		}
@@ -74,7 +72,7 @@ class PeerConnection
 			var at = 0
 			while (at < data.length)
 			{
-				if (!tryy(socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at)), _e => {log(_e.getMessage);dispose}))
+				if (!t(socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at)), _e => {log(_e.getMessage);dispose}))
 					return
 				at += bufferSize
 			}
@@ -95,5 +93,5 @@ class PeerConnection
 		close
 	}
 	
-	def close = if (socket != null) tryy(socket.close)
+	def close = if (socket != null) t(socket.close)
 }

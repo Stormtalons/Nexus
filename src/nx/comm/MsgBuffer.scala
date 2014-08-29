@@ -5,9 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.control.Breaks._
 
 class MsgBuffer
-{
-	import nx.Main._
-
+{import nx.Main._
 	private val stage = new ArrayBuffer[Byte]
 	def <<(_bytes: Array[Byte]): MsgBuffer = synchronized{stage ++= _bytes;this}
 	def <<(_bytes: Byte*): MsgBuffer = synchronized{stage ++= _bytes;this}

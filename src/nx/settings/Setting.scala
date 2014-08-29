@@ -4,8 +4,6 @@ import javafx.scene.control.Label
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.{GridPane, StackPane}
 
-import nx.Main
-
 object Setting
 {
 	final val HORIZONTAL = 0
@@ -13,10 +11,10 @@ object Setting
 }
 
 abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane
-{
-	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, try new Image(_icon) catch {case e => null}, _scale)
+{import nx.Main._
+	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, nx.Main.tg[Image]({new Image(_icon)}), _scale)
 	def this(_label: String, _icon: Image, _scale: Int) = this(_label, null, _icon, _scale)
-	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, try new Image(_icon) catch {case e => null}, _scale)
+	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, nx.Main.tg[Image]({new Image(_icon)}), _scale)
 	def this(_label: String) = this(_label, null, "", 0)
 	def this(_label: String, _value: T) = this(_label, _value, "", 0)
 	def this(_value: T, _icon: Image, _scale: Int) = this("", _value, _icon, _scale)
@@ -47,7 +45,7 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	private val icon_ : ImageView = new ImageView(_icon)
 	def icon = icon_.getImage
 	def icon_=(_filePath: String): Unit = icon = try new Image(_filePath) catch {case e => null}
-	def icon_=(_image: Image): Unit = Main.fx({
+	def icon_=(_image: Image): Unit = fx({
 		icon_.setImage(_image)
 		doLayout
 	})
@@ -61,12 +59,12 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	protected val label_ = new Label(_label)
 	label_.setWrapText(true)
 	def label = label_.getText
-	def label_=(_label: String) = Main.fx(label_.setText(_label))
+	def label_=(_label: String) = fx(label_.setText(_label))
 
 	protected var value_ : T = _value
 	def value: String = if (value_ == null) "" else value_.toString
 	def value_=(_value: T)
-	def value_=(_value: String)
+//	def value_=(_value: String)
 	
 	protected val editStack = new StackPane
 
@@ -74,7 +72,7 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	
 	def endEdit(_save: Boolean)
 
-	def doLayout = Main.fx({
+	def doLayout = fx({
 		var (c, r) = (0, 0)
 		getChildren.clear
 		if (icon != null)

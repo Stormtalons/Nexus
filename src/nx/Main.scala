@@ -1,6 +1,6 @@
 package nx
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileWriter}
 import java.net.ServerSocket
 import java.nio.file.{Files, Paths}
 import javafx.application.Platform
@@ -13,13 +13,16 @@ import javafx.scene.layout.{AnchorPane, HBox, VBox}
 import javafx.stage.{Stage, Window, WindowEvent}
 import javax.imageio.ImageIO
 
-import nx.comm.PeerManager
+import nx.comm.ConnectionManager
 import nx.widgets.{FileWidget, FolderWidget}
 
 import scala.collection.mutable.ArrayBuffer
 
-object Repeat
+trait Repeat
 {
+	case class Repeat(_val: AnyVal)
+	{def ^(_i: Int): String = {var s = _val.toString;for (i <- 2 to _i) s+=_val;s}}
+
 	implicit def toRpt(_val: Byte) = Repeat(_val.asInstanceOf[AnyVal])
 	implicit def toRpt(_val: Int) = Repeat(_val.asInstanceOf[AnyVal])
 	implicit def toRpt(_val: Long) = Repeat(_val.asInstanceOf[AnyVal])
@@ -28,10 +31,8 @@ object Repeat
 	implicit def toRpt(_val: Char) = Repeat(_val.asInstanceOf[AnyVal])
 	implicit def toRpt(_val: String) = Repeat(_val.asInstanceOf[AnyVal])
 }
-case class Repeat(_val: AnyVal)
-{def ^(_i: Int): String = {var s = _val.toString;for (i <- 2 to _i) s+=_val;s}}
 
-object Main extends App
+object Main extends App with Repeat
 {
 	implicit def strToByteArray(_str: String): Array[Byte] = _str.getBytes("UTF-8")
 	implicit def byteArrayToStr(_bytes: Array[Byte]): String = new String(_bytes, "UTF-8")
@@ -45,7 +46,7 @@ object Main extends App
 	}
 	var serverPort = 19265
 
-	//Development flags
+//	Dev tools
 	var useConfig = true
 	var instance = 1
 	try
@@ -61,7 +62,11 @@ object Main extends App
 			instance = 2
 			println("Host instance initialized")
 	}
-
+	val logFile = new File(s"log$instance.log")
+	if (!logFile.exists)
+		logFile.createNewFile
+	val logWriter = new FileWriter(logFile, true)
+//	/Dev tools
 
 	val sep = "<@@>"
 	val eom = sep + "EM"
@@ -116,24 +121,25 @@ object Main extends App
 			addWidgets(desktop, _json.get[ArrayBuffer[JSON]]("widgets"))
 	})
 
-	def log(_str: String) = println("Logger: " + _str)
-	def run(code: => Unit) = new Thread(new Runnable {def run = code}).start
-	def fx(code: => Unit) = if (Platform.isFxApplicationThread) code else Platform.runLater(new Runnable {def run = code})
-	def tryy(code: => Unit, exHandler: (Exception) => Unit = null): Boolean = try {code;true} catch {case e: Exception => exHandler(e);false}
+	def log(_str: String, _lines: Int = 1) = t(logWriter.write("Instance ${instance} - ${new SimpleDateFormat(\"yyyyMMdd.hh:mm:ss\").format(Calendar.getInstance.getTime)}: ${_str}${'\n'^_lines}"))
+	def t(_code: => Unit, _exHandler: (Exception) => Unit = null): Boolean = try {_code;true} catch {case e: Exception => _exHandler(e);false}
+	def tg[T <: Any](_code: => T, _dft: T = null): T = try _code catch {case e: Exception => _dft}
+	def ex(_code: => Unit) = new Thread(new Runnable {def run = _code}).start
+	def fx(_code: => Unit) = if (Platform.isFxApplicationThread) t(_code) else Platform.runLater(new Runnable {def run = t(_code)})
 }
 
 class Main extends javafx.application.Application
-{
-	import nx.Main._
+{import nx.Main._
 
 	def launch = javafx.application.Application.launch()
 
-	var peerManager: PeerManager = null
+	var connManager: ConnectionManager = null
 
 	var mainPanel: VBox = null
 
 	def start(stg: Stage)
 	{
+		log("Application start")
 		window = stg
 		mainPanel = new VBox
 
@@ -154,7 +160,7 @@ class Main extends javafx.application.Application
 		val json = new Button("Desktop To JSON")
 		json.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = log(desktop.toJSON + "\n\n")})
 		val cnct = new Button("Connect to self")
-		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = peerManager.connect("127.0.0.1", serverPort)})
+		cnct.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = connManager.connect("127.0.0.1", serverPort)})
 		val test = new Button("Test")
 		test.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = Files.write(Paths.get("test.txt"), "DESKTOP" + sep + serialize + eom)})
 		devToolbar.getChildren.addAll(newFolder, json, cnct, test)
@@ -163,13 +169,15 @@ class Main extends javafx.application.Application
 
 		stg.addEventFilter(WindowEvent.WINDOW_HIDING, new EventHandler[WindowEvent]{def handle(_evt: WindowEvent) =
 		{
-			peerManager.stop
+			log("Stopping connection manager")
+			connManager.stop
+			
 			saveState
 		}})
 		stg.setScene(new Scene(mainPanel))
 		stg.show
 
-		peerManager = new PeerManager
-		peerManager.run
+		connManager = new ConnectionManager
+		connManager.run
 	}
 }

@@ -1,14 +1,12 @@
 package nx
 
 trait Asynch
-{
-	import Main._
-
+{import Main._
 	private var running = false
 	var done = true
 	var code: () => Unit
 	def callback: () => Unit = null
-	def run = Main.run({
+	def run = ex({
 		running = true
 		done = false
 		while (running)

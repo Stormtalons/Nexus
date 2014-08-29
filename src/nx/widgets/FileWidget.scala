@@ -10,7 +10,7 @@ import nx.JSON
 import nx.settings.StringSetting
 
 class FileWidget(_file: File) extends Widget with Content[File]
-{
+{import nx.Main._
 	getStyleClass.add("fileWidget")
 
 	def this(_file: File, _onClick: => Unit) =
@@ -30,7 +30,7 @@ class FileWidget(_file: File) extends Widget with Content[File]
 	//Temporary, in lieu of loading thumbnail
 	setStyle("-fx-background-color: green")
 	val tt = new Tooltip(content.getPath)
-	setOnMouseEntered(new EventHandler[MouseEvent]{def handle(_evt: MouseEvent) = tt.show(nx.Main.window)})
+	setOnMouseEntered(new EventHandler[MouseEvent]{def handle(_evt: MouseEvent) = tt.show(window)})
 	setOnMouseExited(new EventHandler[MouseEvent]{def handle(_evt: MouseEvent) = tt.hide})
 
 	def toJSON: JSON =

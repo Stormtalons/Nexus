@@ -18,9 +18,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
 class FolderWidget extends Widget
-{
-	import Main._
-
+{import Main._
 	getStyleClass.add("folderWidget")
 
 	def this(_name: String) =
@@ -122,9 +120,9 @@ class FolderWidget extends Widget
 		if (widgets.getChildren.contains(_w))
 		{
 			left = GridPane.getColumnIndex(_w)
-			right = try GridPane.getColumnSpan(_w) + left - 1 catch {case e => left}
+			right = tg[Int]({GridPane.getColumnSpan(_w) + left - 1}, left)
 			upper = GridPane.getRowIndex(_w)
-			lower = try GridPane.getRowSpan(_w) + upper - 1 catch {case e => upper}
+			lower = tg[Int]({GridPane.getRowSpan(_w) + upper - 1}, upper)
 		}
 		(left, right, upper, lower)
 	}

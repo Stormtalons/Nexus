@@ -7,16 +7,15 @@ import javafx.scene.control.{Label, TextField}
 import javafx.scene.image.Image
 import javafx.scene.input.{KeyCode, KeyEvent, MouseEvent}
 
-import nx.Main
-
 class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) extends Setting[String](_label: String, _value: String, _icon: Image, _scale: Int)
-{
-	def this(_label: String, _value: String, _icon: String, _scale: Int) = this(_label, _value, try new Image(_icon) catch {case e => null}, _scale)
+{import nx.Main._
+
+	def this(_label: String, _value: String, _icon: String, _scale: Int) = this(_label, _value, nx.Main.tg[Image]({new Image(_icon)}), _scale)
 
 	def value_=(_value: String) =
 	{
 		value_ = _value
-		Main.fx({
+		fx({
 			valueLabel_.setText(value)
 			valueEdit_.setText(value)
 		})
@@ -55,14 +54,14 @@ class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) e
 
 	editStack.getChildren.addAll(valueLabel_, valueEdit_)
 
-	def beginEdit = Main.fx({
+	def beginEdit = fx({
 		valueEdit_.setText(value)
 		valueLabel_.setVisible(false)
 		valueEdit_.setVisible(true)
 		valueEdit_.requestFocus
 	})
 
-	def endEdit(_save: Boolean) = Main.fx({
+	def endEdit(_save: Boolean) = fx({
 		editing = true
 		if (_save && valueEdit_.getText.trim.length > 0)
 			value = valueEdit_.getText.trim
