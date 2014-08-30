@@ -1,5 +1,13 @@
 package nx.comm
 
+import java.net.{InetSocketAddress, StandardSocketOptions}
+import java.nio.ByteBuffer
+import java.nio.channels.{ServerSocketChannel, SelectionKey, Selector, SocketChannel}
+
+import nx.{Util, Asynch}
+
+import scala.collection.mutable.ArrayBuffer
+
 class SocketHive extends Asynch with Util
 {
 	var abandonHive = false
@@ -11,20 +19,20 @@ class SocketHive extends Asynch with Util
 	{
 		migrate
 		SocketChannel.open
-			.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+			.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
 			.configureBlocking(false)
 			.register(hiveQueen, SelectionKey.OP_CONNECT)
 			.asInstanceOf[SocketChannel]
 			.connect(new InetSocketAddress(_host, _port))
 	}
-	def hatch(_swarmling: SocketChannel) =
+	def hatch(_swarmling: SocketChannel): Unit =
 	{
 		if (swarm.length >= populationCap)
 			tryDo(_swarmling.close)
 		else
 		{
 			_swarmling
-				.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+				.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
 				.configureBlocking(false)
 			if (!_swarmling.isConnected)
 				_swarmling
@@ -39,7 +47,7 @@ class SocketHive extends Asynch with Util
 			}
 		}
 	}
-	def hatch(_spawnlingCount: Int) =
+	def hatch(_spawnlingCount: Int): Unit =
 		for (i <- 0 until _spawnlingCount)
 			if (swarm.length < populationCap)
 				hatch(SocketChannel.open)
@@ -51,7 +59,7 @@ class SocketHive extends Asynch with Util
 	}
 
 	val spawningPool = ServerSocketChannel.open
-	spawningPool.setOption(StandardSocketOptions.SO_REUSEADDR, true)
+	spawningPool.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
 	spawningPool.configureBlocking(false)
 	def assimilate(_spawnlingCount: Int) =
 	{
@@ -71,7 +79,7 @@ class SocketHive extends Asynch with Util
 		}
 	}
 
-	addActivities(
+	addActivity(
 		while (hiveQueen.select > 0)
 		{
 			val hive = hiveQueen.selectedKeys.iterator
