@@ -100,18 +100,17 @@ object JSON
 	}
 }
 
-case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None)
-{
-	implicit def stringToOption(s: String) = Some(s)
+case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None) extends Util
+{import scala.language.implicitConversions
+	implicit def strToOption(s: String) = Some(s)
 	implicit def anyrefToOption(ar: AnyRef) = Some(ar)
 
-	private var datatype_ : Int = try _value.get match
+	private var datatype_ : Int = tryGet(_value.get match
 	{
 		case str: String => JSON.STRING
 		case json: JSON => JSON.OBJECT
 		case ar: ArrayBuffer[JSON] => JSON.ARRAY
-	}
-	catch {case e => JSON.OBJECT}
+	}, JSON.OBJECT)
 	def datatype = datatype_
 	def datatype_= (_datatype: Int) = datatype_ = _datatype
 

@@ -2,7 +2,7 @@ package nx.widgets
 
 import java.awt.Desktop
 import java.io.File
-import javafx.event.{ActionEvent, EventHandler}
+import javafx.event.ActionEvent
 import javafx.geometry.{HPos, Pos, VPos}
 import javafx.scene.Node
 import javafx.scene.control.{ContextMenu, MenuItem}
@@ -12,13 +12,13 @@ import javafx.scene.layout._
 import javafx.stage.FileChooser
 
 import nx.settings.StringSetting
-import nx.{JSON, Main}
+import nx.{InterfaceShortcuts, JSON, Util}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-class FolderWidget extends Widget
-{import Main._
+class FolderWidget extends Widget with Util with InterfaceShortcuts
+{
 	getStyleClass.add("folderWidget")
 
 	def this(_name: String) =
@@ -35,15 +35,16 @@ class FolderWidget extends Widget
 
 	private var background_ : Image = null
 	def background = background_
-	def background_=(_img: Image) =
+	def background_=(_img: Image): Unit =
 	{
 		background_ = _img
 		widgets.setBackground(new Background(new BackgroundImage(background_,
-														BackgroundRepeat.REPEAT,
-														BackgroundRepeat.REPEAT,
-														BackgroundPosition.DEFAULT,
-														BackgroundSize.DEFAULT)))
+			BackgroundRepeat.REPEAT,
+			BackgroundRepeat.REPEAT,
+			BackgroundPosition.DEFAULT,
+			BackgroundSize.DEFAULT)))
 	}
+	def background_=(_str: String): Unit = background = new Image(_str)
 
 	private val name_ = new StringSetting("", "New Folder", "/nx/res/folder.png", scale)
 	def name = name_.value
@@ -53,40 +54,30 @@ class FolderWidget extends Widget
 	
 	protected val header = new HBox
 	header.getChildren.add(name_)
-	header.setOnMouseClicked(new EventHandler[MouseEvent]{def handle(_evt: MouseEvent) =
-		if (_evt.getClickCount == 2)
-			if (!isExpanded)
-				expand
-			else
-				collapse
-		else
-		{
-			requestFocus
-			_evt.consume
-		}})
+	header.setOnMouseClicked(handleEvt[MouseEvent](_evt =>
+		if (_evt.getClickCount == 2) {if (!isExpanded) expand else collapse}
+		else {requestFocus;_evt.consume}))
 	header.setAlignment(Pos.CENTER_LEFT)
 	contentPane.getChildren.add(header)
 	getChildren.add(contentPane)
 
 	protected val headerMenu = new ContextMenu
 	protected val remove = new MenuItem("Delete")
-	remove.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = desktop.removeWidget(FolderWidget.this)})
+	remove.setOnAction(handle[ActionEvent](desktop.removeWidget(FolderWidget.this)))
 
 	headerMenu.getItems.addAll(remove)
-	header.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
+	header.setOnContextMenuRequested(handleEvt[ContextMenuEvent](_evt =>
 		if (_evt.getSource.isInstanceOf[Node])
 		{
 			headerMenu.show(_evt.getSource.asInstanceOf[Node], _evt.getScreenX, _evt.getScreenY)
 			_evt.consume
-		}})
+		}))
 
 	protected var (rowMax, colMax) = (0, 0)
 	protected val widgets: GridPane = new GridPane
 	VBox.setVgrow(widgets, Priority.ALWAYS)
-	widgets.setOnDragOver(new EventHandler[DragEvent]{def handle(_evt: DragEvent) =
-		if (_evt.getDragboard.hasContent(DataFormat.FILES))
-			_evt.acceptTransferModes(TransferMode.MOVE)})
-	widgets.setOnDragDropped(new EventHandler[DragEvent]{def handle(_evt: DragEvent) =
+	widgets.setOnDragOver(handleEvt[DragEvent](_evt => if (_evt.getDragboard.hasContent(DataFormat.FILES)) _evt.acceptTransferModes(TransferMode.MOVE)))
+	widgets.setOnDragDropped(handleEvt[DragEvent](_evt =>
 	{
 		val row = math.floor(_evt.getY / scale).toInt
 		val col = math.floor(_evt.getX / scale).toInt
@@ -103,7 +94,7 @@ class FolderWidget extends Widget
 				addWidget(toAdd)
 		}
 		_evt.consume
-	}})
+	}))
 	def getWidgets[T <: Widget:ClassTag]: ArrayBuffer[T] =
 	{
 		var toReturn = new ArrayBuffer[T]
@@ -120,9 +111,9 @@ class FolderWidget extends Widget
 		if (widgets.getChildren.contains(_w))
 		{
 			left = GridPane.getColumnIndex(_w)
-			right = tg[Int]({GridPane.getColumnSpan(_w) + left - 1}, left)
+			right = tryGet[Int]({GridPane.getColumnSpan(_w) + left - 1}, left)
 			upper = GridPane.getRowIndex(_w)
-			lower = tg[Int]({GridPane.getRowSpan(_w) + upper - 1}, upper)
+			lower = tryGet[Int]({GridPane.getRowSpan(_w) + upper - 1}, upper)
 		}
 		(left, right, upper, lower)
 	}
@@ -178,8 +169,8 @@ class FolderWidget extends Widget
 		colMax = _colMax
 		getWidgets[Widget].foreach(_w =>
 		{
-			colMax = math.max(colMax, GridPane.getColumnIndex(_w) + (try GridPane.getColumnSpan(_w) - 1 catch {case e => 0}))
-			rowMax = math.max(rowMax, GridPane.getRowIndex(_w) + (try GridPane.getRowSpan(_w) - 1 catch {case e => 0}))
+			colMax = math.max(colMax, GridPane.getColumnIndex(_w) + tryGet(GridPane.getColumnSpan(_w) - 1, 0))
+			rowMax = math.max(rowMax, GridPane.getRowIndex(_w) + tryGet(GridPane.getRowSpan(_w) - 1, 0))
 		})
 
 		val rc = new RowConstraints
@@ -229,26 +220,27 @@ class FolderWidget extends Widget
 
 	protected val widgetMenu = new ContextMenu
 	protected val addFolder = new MenuItem("Add Folder")
-	addFolder.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) = addWidget(new FolderWidget("New Folder"))})
+	addFolder.setOnAction(handle[ActionEvent](addWidget(new FolderWidget("New Folder"))))
 	protected val setBackgroundItem = new MenuItem("Choose Background")
-	setBackgroundItem.setOnAction(new EventHandler[ActionEvent]{def handle(_evt: ActionEvent) =
+	setBackgroundItem.setOnAction(handle[ActionEvent](
 	{
 		val bg = new FileChooser().showOpenDialog(window)
 		if (bg != null)
 			background = new Image(bg.toURI.toURL.toString)
-	}})
+	}))
 	widgetMenu.getItems.addAll(addFolder, setBackgroundItem)
-	widgets.setOnContextMenuRequested(new EventHandler[ContextMenuEvent]{def handle(_evt: ContextMenuEvent) =
+	widgets.setOnContextMenuRequested(handleEvt[ContextMenuEvent](_evt =>
 		if (_evt.getSource.isInstanceOf[Node])
 		{
 			widgetMenu.show(_evt.getSource.asInstanceOf[Node], _evt.getScreenX, _evt.getScreenY)
 			_evt.consume
-		}})
+		}))
 
 	def toJSON: JSON =
 	{
 		val toReturn = JSON()
 
+		toReturn += JSON("guid", guid: String)
 		toReturn += JSON("type", "FolderWidget")
 		toReturn += JSON("name", name)
 		toReturn += JSON("expanded", isExpanded.toString)

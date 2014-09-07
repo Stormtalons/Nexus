@@ -1,21 +1,21 @@
 package nx.comm
 
-import java.net.{SocketTimeoutException, ServerSocket, Socket}
+import java.net.{ServerSocket, Socket, SocketTimeoutException}
 
-import nx.{Main, Asynch}
+import nx.Asynch
 
 class ConnectionListener(_callback: (Socket) => Unit) extends Asynch
-{import Main._
+{
 	var socket: ServerSocket = null
-	var code: () => Unit = () => t(try _callback(socket.accept) catch {case ste: SocketTimeoutException =>}, _e => {log(_e.getMessage);stop})
-	override def callback = () => t(socket.close)
+	var code: () => Unit = () => tryDo(try _callback(socket.accept) catch {case ste: SocketTimeoutException =>}, _e => {log(_e.getMessage);stop})
+	override def callback = () => tryDo(socket.close)
 
 	def reset: Boolean =
 	{
 		stopAndWait
 		if (socket != null)
 			socket.close
-		t({
+		tryDo({
 			socket = new ServerSocket(serverPort)
 			socket.setSoTimeout(5000)
 			run

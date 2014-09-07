@@ -4,17 +4,19 @@ import javafx.scene.control.Label
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.{GridPane, StackPane}
 
+import nx.{Main, Util}
+
 object Setting
 {
 	final val HORIZONTAL = 0
 	final val VERTICAL = 1
 }
 
-abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane
-{import nx.Main._
-	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, nx.Main.tg[Image]({new Image(_icon)}), _scale)
+abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane with Util
+{
+	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, Main.tryGet[Image]({new Image(_icon)}), _scale)
 	def this(_label: String, _icon: Image, _scale: Int) = this(_label, null, _icon, _scale)
-	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, nx.Main.tg[Image]({new Image(_icon)}), _scale)
+	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, Main.tryGet[Image]({new Image(_icon)}), _scale)
 	def this(_label: String) = this(_label, null, "", 0)
 	def this(_label: String, _value: T) = this(_label, _value, "", 0)
 	def this(_value: T, _icon: Image, _scale: Int) = this("", _value, _icon, _scale)
@@ -44,7 +46,7 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 
 	private val icon_ : ImageView = new ImageView(_icon)
 	def icon = icon_.getImage
-	def icon_=(_filePath: String): Unit = icon = try new Image(_filePath) catch {case e => null}
+	def icon_=(_filePath: String): Unit = icon = tryGet(new Image(_filePath))
 	def icon_=(_image: Image): Unit = fx({
 		icon_.setImage(_image)
 		doLayout

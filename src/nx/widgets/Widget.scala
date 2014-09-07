@@ -1,13 +1,14 @@
 package nx.widgets
 
+import java.util.UUID
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout._
 
-import nx.JSON
+import nx.{Util, JSON}
 
-abstract class Widget extends StackPane
-{
+abstract class Widget extends StackPane with Util
+{import scala.language.implicitConversions
 	implicit def stringToOption(s: String) = Some(s)
 	implicit def anyrefToOption(ar: AnyRef) = Some(ar)
 
@@ -18,6 +19,11 @@ abstract class Widget extends StackPane
 
 	getStyleClass.add("widget")
 	getStylesheets.add("/nx/res/dft.css")
+
+	protected var guid_ : UUID = UUID.randomUUID
+	def guid = guid_
+	def guid_=(_uuid: UUID): Unit = guid_ = _uuid
+	def guid_=(_str: String): Unit = guid_ = _str: UUID
 
 	protected var scale_ : Int = 100
 	def scale: Int = scale_

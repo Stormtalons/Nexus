@@ -68,15 +68,14 @@ class SocketHive extends Asynch with Util
 		command(s"spawn|${_spawnlingCount}": SendableString)
 	}
 
-	def command(_cmd: Sendable[_]) =
+	def command(_obj: Sendable[_]) =
 	{
-		val byteGroups = _cmd.bytes.grouped(swarm.length)
-		var i = 0
-		while (byteGroups.hasNext)
-		{
-			tryDo(swarm(i).write(ByteBuffer.wrap(i.toByte +: byteGroups.next union (eom: Array[Byte]))), _e => depart)
-			i += 1
-		}
+		val packets = _obj.getPackets(swarm.length)
+		for (i <- 0 until packets.length)
+			ex(synchronized
+			{
+				tryDo(swarm(i).write(ByteBuffer.wrap(packets(i).toString + eom: Array[Byte])), _e => depart)
+			})
 	}
 
 	addActivity(
@@ -112,7 +111,7 @@ class SocketHive extends Asynch with Util
 		swarm.clear
 		abandonHive = true
 	}
-	def settle = synchronized
+	def infest = synchronized
 	{
 		abandonHive = false
 		hiveQueen = Selector.open
@@ -121,7 +120,7 @@ class SocketHive extends Asynch with Util
 	def migrate =
 	{
 		depart
-		settle
+		infest
 	}
 
 	run

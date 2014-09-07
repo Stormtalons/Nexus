@@ -2,8 +2,12 @@ package nx.comm
 
 import java.net.{InetSocketAddress, Socket}
 
-class ClientConnection
-{import nx.Main._
+import nx.Util
+
+import scala.collection.mutable.ArrayBuffer
+
+class ClientConnection extends Util
+{
 	def this(_host: String, _port: Int) =
 	{
 		this
@@ -36,20 +40,25 @@ class ClientConnection
 	def getObj[T <: Sendable[T]](_key: String): T = inBuffer.getObj[T](_key)
 
 	def connect(_socket: Socket) = socket = _socket
-	def connect(_host: String, _port: Int) =
-		try
+	def connect(_host: String, _port: Int): Boolean =
+		tryGet[Boolean](
 		{
 			close
+			log(s"Attempting to connect to ${_host}:${_port}")
 			socket.connect(new InetSocketAddress(_host, _port), 5000)
+			log("Connected successfully")
 			sendMsg("gimme")
 			recycleable = false
-		}
-		catch
+			true
+		},
 		{
-			case e: Exception =>
-				log(e.getMessage)
-				dispose
-		}
+			log("Failed to connect")
+			dispose
+			false
+		})
+
+	def getIP: String = tryGet[String](socket.getLocalAddress.getHostAddress, "")
+	def getHost: String = tryGet[String](socket.getLocalAddress.getHostName, "")
 
 	def processTraffic: Unit =
 	{
@@ -57,7 +66,7 @@ class ClientConnection
 		{
 			val data = new Array[Byte](bufferSize)
 			var read = 0
-			if (!t({read = socket.getInputStream.read(data)}, _e => {log(_e.getMessage);dispose}))
+			if (!tryDo({read = socket.getInputStream.read(data)}, _e => {log(_e.getMessage);dispose}))
 				return
 			inBuffer << data.dropRight(data.length - read)
 		}
@@ -72,7 +81,7 @@ class ClientConnection
 			var at = 0
 			while (at < data.length)
 			{
-				if (!t(socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at)), _e => {log(_e.getMessage);dispose}))
+				if (!tryDo(socket.getOutputStream.write(data, at, math.min(bufferSize, data.length - at)), _e => {log(_e.getMessage);dispose}))
 					return
 				at += bufferSize
 			}
@@ -93,5 +102,38 @@ class ClientConnection
 		close
 	}
 	
-	def close = if (socket != null) t(socket.close)
+	def close = tryDo(socket.close)
+}
+
+class Msgs extends Util
+{
+	val in = ArrayBuffer[Sendable[_]]()
+//	def in_+=(_bytes: Array[Byte]) = synchronized
+//	{
+//		_bytes(0) match
+//		{
+//		case Sendable.STRING => in += new SendableString(_bytes)
+//		case Sendable.IMAGE => in += new SendableImage(_bytes)
+//		case Sendable.FILE => in += new SendableFile(_bytes)
+//		}
+//	}
+	def nextIn = if (in.length > 0) synchronized{in.remove(0)} else null
+
+	val out = ArrayBuffer[Sendable[_]]()
+//	def out_+=(_bytes: Array[Byte]) = synchronized
+//	{
+//		_bytes(0) match
+//		{
+//		case Sendable.STRING => out += new SendableString(_bytes)
+//		case Sendable.IMAGE => out += new SendableImage(_bytes)
+//		case Sendable.FILE => out += new SendableFile(_bytes)
+//		}
+//	}
+	def nextOut = if (out.length > 0) synchronized{out.remove(0)} else null
+
+	def clear = synchronized
+	{
+		in.clear
+		out.clear
+	}
 }

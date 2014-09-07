@@ -1,48 +1,72 @@
 package nx.comm
 
+import java.util.UUID
 import javafx.scene.image.Image
 
-object Sendable
+import nx.Util
+
+case class SendableMetadata(guid: UUID, piece: Int, totalPieces: Int, data: Array[Byte]) extends Util
 {
-	val STRING: Byte = 0
-	val IMAGE: Byte = 1
-	val FILE: Byte = 2
+	override def toString: String = guid + sep + piece + sep + totalPieces + sep + (data: String)
+	def toBytes: Array[Byte] = toString: Array[Byte]
+}
+object Sendable extends Util
+{
+	val STRING	= "00000000"
+	val IMAGE	= "00000001"
+	val FILE	= "00000002"
 }
 
-trait Sendable[T <: Sendable[T]]
-{import nx.Main._
-	def label: String
-	def bytes: Array[Byte]
-	def obj: AnyRef
-	def splitLabel(_bytes: Array[Byte]): (String, Array[Byte]) =
+trait Sendable[T <: Any] extends Util
+{
+	var guid: UUID = null
+	def createGUID =
 	{
-		var i = 0
-		while (i < _bytes.length && _bytes(i) != '|')
-			i += 1
-		val (imgLabel, imgData) = _bytes.splitAt(i)
-		(imgLabel, imgData)
+		val temp = UUID.randomUUID.toString
+		guid = (obj match
+		{
+			case str: String => Sendable.STRING
+			case im: Image => Sendable.IMAGE
+			case ar: Array[Byte] => Sendable.FILE
+		}) + temp.splitAt(temp.indexOf('-'))._2: UUID
+	}
+	val obj: T
+	def toBytes: Array[Byte]
+	def getPackets(_num: Int): Array[SendableMetadata] =
+	{
+		val toReturn = new Array[SendableMetadata](_num)
+		val byteGroups = toBytes.grouped(_num).toArray
+		for (i <- 0 until _num)
+			toReturn(i) = SendableMetadata(guid, i, _num, byteGroups(i))
+		toReturn
 	}
 }
 
-class SendableString(_bytes: Array[Byte]) extends Sendable[SendableString]
-{import nx.Main._
-	def label = ""
-	def bytes: Array[Byte] = Sendable.STRING + obj
-	def obj: String = _bytes
+class SendableObject[T <: Any](_obj: T, _toBytes: T => Array[Byte] = null) extends Sendable[T]
+{
+	def this(_obj: T, _guid: String) =
+	{
+		this(_obj)
+		guid = _guid: UUID
+	}
+
+	val obj = _obj
+	def toBytes = _toBytes(obj)
+	createGUID
 }
 
-class SendableImage(_bytes: Array[Byte]) extends Sendable[SendableImage]
-{import nx.Main._
-	val parts = splitLabel(_bytes)
-	def label = parts._1
-	def bytes = (Sendable.IMAGE + label + "|": Array[Byte]) union parts._2
-	def obj: Image = parts._2
+class SendableString(_str: String) extends SendableObject[String](_str)
+{
+	override def toBytes = obj: Array[Byte]
 }
 
-class SendableFile(_bytes: Array[Byte]) extends Sendable[SendableFile]
-{import nx.Main._
-	val parts = splitLabel(_bytes)
-	def label = parts._1
-	def bytes = (Sendable.FILE + label + "|": Array[Byte]) union parts._2
-	def obj: Array[Byte] = parts._2
+class SendableImage(_img: Image) extends SendableObject[Image](_img)
+{
+	override def toBytes = obj: Array[Byte]
+}
+
+class SendableFile(_fileData: Array[Byte]) extends SendableObject[Array[Byte]](_fileData)
+{
+	override def toBytes = obj
+	def writeFile(_filePath: String) = toFile(_filePath, obj)
 }
