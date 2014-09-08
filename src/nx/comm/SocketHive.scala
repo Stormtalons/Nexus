@@ -65,18 +65,18 @@ class SocketHive extends Asynch with Util
 	{
 		populationCap = _spawnlingCount + 1
 		spawningPool.register(hiveQueen, SelectionKey.OP_ACCEPT)
-		command(s"spawn|${_spawnlingCount}": SendableString)
+//		command(s"spawn|${_spawnlingCount}")
 	}
 
-	def command(_obj: Sendable[_]) =
-	{
-		val packets = _obj.getPackets(swarm.length)
-		for (i <- 0 until packets.length)
-			ex(synchronized
-			{
-				tryDo(swarm(i).write(ByteBuffer.wrap(packets(i).toString + eom: Array[Byte])), _e => depart)
-			})
-	}
+//	def command(_obj: Sendable[_]) =
+//	{
+//		val packets = _obj.getPackets(swarm.length)
+//		for (i <- 0 until packets.length)
+//			ex(synchronized
+//			{
+//				tryDo(swarm(i).write(ByteBuffer.wrap(packets(i).toString + eom: Array[Byte])), _e => depart)
+//			})
+//	}
 
 	addActivity(
 		while (hiveQueen.select > 0)

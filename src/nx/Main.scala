@@ -1,12 +1,12 @@
 package nx
 
 import java.awt.event.ActionListener
-import java.awt._
+import java.awt.{MenuItem, PopupMenu, SystemTray, TrayIcon}
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileWriter}
 import java.net._
 import java.nio.file.{Files, Path, Paths}
 import java.text.SimpleDateFormat
-import java.util.{EventListener, Calendar, UUID}
+import java.util.{Calendar, EventListener, UUID}
 import javafx.application.{Application, Platform}
 import javafx.embed.swing.SwingFXUtils
 import javafx.event.{ActionEvent, Event, EventHandler, EventType}
@@ -17,7 +17,7 @@ import javafx.scene.{Node, Scene}
 import javafx.stage.{Stage, Window, WindowEvent}
 import javax.imageio.ImageIO
 
-import nx.comm.{ConnectionManager, SendableObject, SendableString}
+import nx.comm.{ConnectionManager, Sendable}
 import nx.widgets.{FileWidget, FolderWidget}
 
 import scala.collection.mutable.ArrayBuffer
@@ -37,7 +37,7 @@ trait InterfaceShortcuts
 	{
 		tag match
 		{
-			case ae: java.awt.event.ActionListener => new ActionListener {def actionPerformed(e: event.ActionEvent) = _code()}
+			case ae: java.awt.event.ActionListener => new ActionListener {def actionPerformed(e: java.awt.event.ActionEvent) = _code()}
 			case _ => null
 		}
 	}.asInstanceOf[T]
@@ -100,7 +100,6 @@ trait Util
 	implicit def strToPath(_str: String): Path = Paths.get(_str)
 	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
 	implicit def strToUUID(_str: String): UUID = UUID.fromString(_str)
-	implicit def strToSendable(_str: String): SendableString = new SendableString(_str: Array[Byte])
 
 	implicit def pathToBytes(_path: Path): Array[Byte] = if (fileExists(_path)) Files.readAllBytes(_path) else Array[Byte]()
 	implicit def pathToStr(_path: Path): String = _path: Array[Byte]
@@ -131,9 +130,9 @@ trait Util
 	def fx(_code: => Unit) = if (Platform.isFxApplicationThread) tryDo(_code) else Platform.runLater(new Runnable {def run = tryDo(_code)})
 }
 
-class SOMaker[T <: Any]()(implicit manifest: Manifest[SendableObject[T]])
+class SOMaker[T <: Any]()(implicit manifest: Manifest[Sendable[T]])
 {
-	def make: SendableObject[T] = manifest.erasure.newInstance.asInstanceOf[SendableObject[T]]
+	def make: Sendable[T] = manifest.erasure.newInstance.asInstanceOf[Sendable[T]]
 }
 object Main extends App with Util with InterfaceShortcuts
 {
@@ -141,6 +140,29 @@ object Main extends App with Util with InterfaceShortcuts
 //	val classMirror = runtimeMirror.reflectClass(runtimeMirror.classSymbol(runtimeMirror.runtimeClass(ru.typeOf[SendableObject[_]])))
 //	val constructor = ru.typeOf[SendableObject[_]].member(ru.stringToTermName("<init>")).asTerm.alternatives(1).asMethod
 //	val sendableObject = classMirror.reflectConstructor(constructor)("Hello, World!", (_str: String) => _str: Array[Byte]).asInstanceOf[SendableObject[_]]
+	val asdf = Sendable.construct(Sendable.STRING, "Hello, World!")
+	println(asdf)
+//	val typeDict = HashMap(
+//		"STRING" -> (typeTag[Sendable[String]],		(_str: String) 			 => _str: Array[Byte]),
+//		"IMAGE"  -> (typeTag[Sendable[Image]],		(_img: Image) 			 => _img: Array[Byte]),
+//		"FILE"   -> (typeTag[Sendable[Array[Byte]]],	(_fileData: Array[Byte]) => _fileData)
+//	)
+//	def metadataForType(_type: String) = (typeDict(_type)._1.tpe, typeDict(_type)._1.mirror, typeDict(_type)._2)
+//
+//	val (objType, mirror, objToBytes) = metadataForType("STRING")
+//	mirror.reflectClass(mirror.classSymbol(mirror.runtimeClass(objType))).reflectConstructor(objType.member(stringToTermName("<init>")).asTerm.alternatives(0).asMethod)("Hello, World!", null)
+//		match
+//		{
+//			case sendableWithString: Sendable[String] =>
+//				println("Success!!")
+//				println(sendableWithString.obj)
+//			case lostSendable: Sendable[_] =>
+//				println("Well... sorta.")
+//				println(lostSendable.obj)
+//			case _ => println("Failure. =[")
+//		}
+
+	System.exit(0)
 
 //	<Dev tools>
 	var useConfig_ = true
@@ -174,7 +196,7 @@ object Main extends App with Util with InterfaceShortcuts
 	val trayMenu = new PopupMenu
 	val exitItem = new MenuItem("Exit")
 	//TODO: Fix listener creation function
-	exitItem.addActionListener(new ActionListener {def actionPerformed(e: event.ActionEvent) = quit})
+	exitItem.addActionListener(new ActionListener {def actionPerformed(e: java.awt.event.ActionEvent) = quit})
 	trayMenu.add(exitItem)
 	trayIcon.setPopupMenu(trayMenu)
 	SystemTray.getSystemTray.add(trayIcon)
