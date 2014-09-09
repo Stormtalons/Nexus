@@ -6,6 +6,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, FileWriter}
 import java.net._
 import java.nio.file.{Files, Path, Paths}
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 import java.util.{Calendar, EventListener, UUID}
 import javafx.application.{Application, Platform}
 import javafx.embed.swing.SwingFXUtils
@@ -17,7 +18,7 @@ import javafx.scene.{Node, Scene}
 import javafx.stage.{Stage, Window, WindowEvent}
 import javax.imageio.ImageIO
 
-import nx.comm.{ConnectionManager, Sendable}
+import nx.comm.{ConnectionManager, SendableOld}
 import nx.widgets.{FileWidget, FolderWidget}
 
 import scala.collection.mutable.ArrayBuffer
@@ -46,7 +47,7 @@ trait InterfaceShortcuts
 trait Util
 {import scala.language.implicitConversions
 
-	case class Repeat(_val: Any){def ^(_i: Int): String = {var s = _val.toString;for (i <- 1 to _i) s+=_val.toString;s}}
+	case class Repeat(_val: Any){def ^(_i: Int): String = {var s = "";for (i <- 0 until _i) s += _val.toString;s}}
 	implicit def toRpt(_val: Byte) = Repeat(_val.asInstanceOf[Any])
 	implicit def toRpt(_val: Int) = Repeat(_val.asInstanceOf[Any])
 	implicit def toRpt(_val: Long) = Repeat(_val.asInstanceOf[Any])
@@ -54,6 +55,14 @@ trait Util
 	implicit def toRpt(_val: Double) = Repeat(_val.asInstanceOf[Any])
 	implicit def toRpt(_val: Char) = Repeat(_val.asInstanceOf[Any])
 	implicit def toRpt(_val: String) = Repeat(_val.asInstanceOf[Any])
+
+	case class Screen[T <: Any](_p: T)
+	{
+		def ^# : T = ^#(1)
+		def ^#(_crlf: Int) : T = {print(_p + ("\n"^_crlf));_p}
+		def ^@ : T = {print(_p);_p}
+	}
+	implicit def anyToScreen[T <: Any](_p: T): Screen[T] = Screen(_p)
 
 	def serverPort = Main.serverPort_
 	def serverPort_=(_port: Int) = Main.serverPort_ = _port
@@ -98,8 +107,9 @@ trait Util
 
 	implicit def strToBytes(_str: String): Array[Byte] = _str.getBytes("UTF-8")
 	implicit def strToPath(_str: String): Path = Paths.get(_str)
-	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
+//	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
 	implicit def strToUUID(_str: String): UUID = UUID.fromString(_str)
+	implicit def strToImg(_str: String): Image = SwingFXUtils.toFXImage(ImageIO.read(getClass.getResource(_str)), null).asInstanceOf[Image]
 
 	implicit def pathToBytes(_path: Path): Array[Byte] = if (fileExists(_path)) Files.readAllBytes(_path) else Array[Byte]()
 	implicit def pathToStr(_path: Path): String = _path: Array[Byte]
@@ -128,11 +138,16 @@ trait Util
 	def tryGet[T <: Any](_code: => T, _dft: => T = null): T = try _code catch {case e: Exception => _dft}
 	def ex(_code: => Unit) = new Thread(new Runnable {def run = _code}).start
 	def fx(_code: => Unit) = if (Platform.isFxApplicationThread) tryDo(_code) else Platform.runLater(new Runnable {def run = tryDo(_code)})
+	def regex[T <: Any](_regex: String, _input: T) =
+	{
+		val m = Pattern.compile(_regex).matcher(_input.toString)
+		if (m.find) m.group else ""
+	}
 }
 
-class SOMaker[T <: Any]()(implicit manifest: Manifest[Sendable[T]])
+class SOMaker[T <: Any]()(implicit manifest: Manifest[SendableOld[T]])
 {
-	def make: Sendable[T] = manifest.erasure.newInstance.asInstanceOf[Sendable[T]]
+	def make: SendableOld[T] = manifest.erasure.newInstance.asInstanceOf[SendableOld[T]]
 }
 object Main extends App with Util with InterfaceShortcuts
 {
@@ -140,7 +155,7 @@ object Main extends App with Util with InterfaceShortcuts
 //	val classMirror = runtimeMirror.reflectClass(runtimeMirror.classSymbol(runtimeMirror.runtimeClass(ru.typeOf[SendableObject[_]])))
 //	val constructor = ru.typeOf[SendableObject[_]].member(ru.stringToTermName("<init>")).asTerm.alternatives(1).asMethod
 //	val sendableObject = classMirror.reflectConstructor(constructor)("Hello, World!", (_str: String) => _str: Array[Byte]).asInstanceOf[SendableObject[_]]
-	val asdf = Sendable.construct(Sendable.STRING, "Hello, World!")
+	val asdf = SendableOld.construct(SendableOld.STRING, "Hello, World!")
 	println(asdf)
 //	val typeDict = HashMap(
 //		"STRING" -> (typeTag[Sendable[String]],		(_str: String) 			 => _str: Array[Byte]),
@@ -266,7 +281,7 @@ class Main extends Application with Util with InterfaceShortcuts
 		mainPanel.getChildren.add(desktopPanel)
 
 		if (fileExists("config.ini") && useConfig)
-			Main.loadState(fileText("config.ini"))
+			Main.loadState(JSON.parse(fileText("config.ini")))
 		else
 		{
 			desktop = new FolderWidget("Desktop")

@@ -13,6 +13,6 @@ class MsgCache extends Util
 		val parts = new Array[SendableMetadata](_length)
 	}
 	
-	val msgBuffer = ArrayBuffer[Sendable[_]]()
+	val msgBuffer = ArrayBuffer[SendableOld[_]]()
 	val partials = new HashMap[UUID, Partial]
 }

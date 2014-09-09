@@ -18,11 +18,11 @@ class MsgBuffer extends Util
 	def getMsg: String = synchronized{if (hasMsg) msgs.remove(0) else null}
 
 	private var objs = HashMap[String, AnyRef]()
-	def addObj[T <: Sendable[T]](_obj: T) = synchronized{objs += ((_obj.guid, _obj))}
+	def addObj[T <: SendableOld[T]](_obj: T) = synchronized{objs += ((_obj.guid, _obj))}
 	def hasObj: Boolean = objs.size > 0
-	def hasObj[T <: Sendable[T]](_key: String): Boolean = synchronized{tryDo(objs.get(_key).asInstanceOf[T])}
+	def hasObj[T <: SendableOld[T]](_key: String): Boolean = synchronized{tryDo(objs.get(_key).asInstanceOf[T])}
 	def getObj: AnyRef = getObj(objs.keysIterator.next)
-	def getObj[T <: Sendable[T]](_key: String): T = synchronized{objs.get(_key).asInstanceOf[T]}
+	def getObj[T <: SendableOld[T]](_key: String): T = synchronized{objs.get(_key).asInstanceOf[T]}
 
 	def clear = synchronized
 	{

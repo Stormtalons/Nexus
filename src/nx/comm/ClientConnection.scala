@@ -36,8 +36,8 @@ class ClientConnection extends Util
 	private val outBuffer = new MsgBuffer
 	def hasMsg: Boolean = inBuffer.hasMsg
 	def getMsg: String = if (hasMsg) inBuffer.getMsg else null
-	def hasObj[T <: Sendable[T]](_key: String): Boolean = inBuffer.hasObj[T](_key)
-	def getObj[T <: Sendable[T]](_key: String): T = inBuffer.getObj[T](_key)
+	def hasObj[T <: SendableOld[T]](_key: String): Boolean = inBuffer.hasObj[T](_key)
+	def getObj[T <: SendableOld[T]](_key: String): T = inBuffer.getObj[T](_key)
 
 	def connect(_socket: Socket) = socket = _socket
 	def connect(_host: String, _port: Int): Boolean =
@@ -107,7 +107,7 @@ class ClientConnection extends Util
 
 class Msgs extends Util
 {
-	val in = ArrayBuffer[Sendable[_]]()
+	val in = ArrayBuffer[SendableOld[_]]()
 //	def in_+=(_bytes: Array[Byte]) = synchronized
 //	{
 //		_bytes(0) match
@@ -119,7 +119,7 @@ class Msgs extends Util
 //	}
 	def nextIn = if (in.length > 0) synchronized{in.remove(0)} else null
 
-	val out = ArrayBuffer[Sendable[_]]()
+	val out = ArrayBuffer[SendableOld[_]]()
 //	def out_+=(_bytes: Array[Byte]) = synchronized
 //	{
 //		_bytes(0) match

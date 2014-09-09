@@ -15,7 +15,7 @@ object XMap
 	case class XMapEntry[V, X](v: V, x: X)
 	case class XMap[V: TypeTag, X: TypeTag](_entries: Seq[XMapEntry[V, X]])
 	{
-		def apply[T: TypeTag](_obj: T, _firstOnly: Boolean = false) = typeOf[T] match
+		def apply[T: TypeTag](_obj: T) = typeOf[T] match
 			{
 				case t if t <:< typeOf[V] && t <:< typeOf[X] => _entries.find(_.v == _obj).map(_.x).getOrElse(_entries.find(_.x == _obj).map(_.v).get)
 				case t if t <:< typeOf[V] => _entries.find(_.v == _obj).map(_.x).get

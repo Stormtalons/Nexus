@@ -2,7 +2,7 @@ package nx.comm
 
 import java.net.Socket
 
-import nx.{Main, Util, Asynch}
+import nx.{JSON, Main, Util, Asynch}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -49,7 +49,7 @@ class ConnectionManager extends Asynch with Util
 					if (msgParts(0).equals("gimme"))
 						_client.sendMsg(s"DESKTOP + $sep + ${Main.serialize}")
 					else if (msgParts(0).equals("DESKTOP"))
-						Main.loadState(msgParts(1))
+						Main.loadState(JSON.parse(msgParts(1)))
 				}
 			})
 		}
