@@ -4,7 +4,8 @@ import javafx.scene.control.Label
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.{GridPane, StackPane}
 
-import nx.{Main, Util}
+import nx.Main
+import nx.util.Tools
 
 object Setting
 {
@@ -12,7 +13,7 @@ object Setting
 	final val VERTICAL = 1
 }
 
-abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane with Util
+abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane with Tools
 {
 	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, Main.tryGet[Image]({new Image(_icon)}), _scale)
 	def this(_label: String, _icon: Image, _scale: Int) = this(_label, null, _icon, _scale)

@@ -12,12 +12,12 @@ import javafx.scene.layout._
 import javafx.stage.FileChooser
 
 import nx.settings.StringSetting
-import nx.{InterfaceShortcuts, JSON, Util}
+import nx.util.{JSON, InterfaceShortcuts, Tools}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-class FolderWidget extends Widget with Util with InterfaceShortcuts
+class FolderWidget extends Widget with Tools with InterfaceShortcuts
 {
 	getStyleClass.add("folderWidget")
 

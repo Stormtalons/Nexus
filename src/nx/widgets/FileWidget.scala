@@ -5,9 +5,9 @@ import javafx.scene.control.Tooltip
 import javafx.scene.input.MouseEvent
 
 import nx.settings.StringSetting
-import nx.{InterfaceShortcuts, JSON, Util}
+import nx.util.{JSON, InterfaceShortcuts, Tools}
 
-class FileWidget(_file: File) extends Widget with Content[File] with Util with InterfaceShortcuts
+class FileWidget(_file: File) extends Widget with Content[File] with Tools with InterfaceShortcuts
 {
 	getStyleClass.add("fileWidget")
 

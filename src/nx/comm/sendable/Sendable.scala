@@ -1,29 +1,16 @@
-package nx
+package nx.comm.sendable
 
 import java.util.UUID
-import javafx.embed.swing.SwingFXUtils
 import javafx.scene.image.Image
-import javax.imageio.ImageIO
+
+import nx.util.XMap._
+import nx.util.{Tools, XMap}
 
 import scala.collection.immutable.HashMap
 import scala.language.{existentials, implicitConversions, postfixOps}
 import scala.reflect.runtime.universe._
 
-import XMap._
-import Sendable._
-
-object TestingStage extends App with Util
-{
-	val str = "Hello, World!"
-	val sendableStr = construct(typeIDInterface(typeTag[String]), str)
-	sendableStr^#2
-
-	val img: Image = SwingFXUtils.toFXImage(ImageIO.read(getClass.getResource("/nx/res/Stormworks_48.png")), null)
-	val sendableImg = construct(typeIDInterface(typeTag[Image]), img)
-	sendableImg^#
-}
-
-object Sendable extends Util
+object Sendable extends Tools
 {
 	private val typeMetadata = HashMap[TypeTag[_], (TypeTag[_], _ => Array[Byte], Array[Byte] => _)](
 		typeTag[String] -> (
@@ -49,7 +36,7 @@ object Sendable extends Util
 		val typeMeta = typeMetadata(_type)
 		(typeMeta._1.tpe, typeMeta._1.mirror, typeMeta._3.asInstanceOf[Array[Byte] => T])
 	}
-	def convertToBytes[T](_obj: T, _type: TypeTag[T]) = typeMetadata(_type)._3.asInstanceOf[T => Array[Byte]](_obj)
+	def convertToBytes[T](_obj: T, _type: TypeTag[T]) = typeMetadata(_type)._2.asInstanceOf[T => Array[Byte]](_obj)
 
 	private val typeIDIndex_ = XMap[String, TypeTag[_]](
 		"00000001" <-> typeTag[String],
@@ -58,19 +45,29 @@ object Sendable extends Util
 	)
 	def typeIDInterface(_str: String) = typeIDIndex_(_str).asInstanceOf[TypeTag[_]]
 	def typeIDInterface(_tag: TypeTag[_]) = typeIDIndex_(_tag).asInstanceOf[String]
+	def typeFromGUID(_guid: UUID) = typeIDInterface(_guid.toString.split("-", 2)(0))
 
-	def construct(_type: String, _data: Array[Byte]) =
+	def construct(_guid: UUID, _data: Array[Byte]) =
 	{
-		val tag = typeIDInterface(_type)
+		val tag = typeFromGUID(_guid)
 		val (objType, mirror, bytesToObj) = getReflectionTools(tag)
 		mirror.reflectClass(mirror.classSymbol(mirror.runtimeClass(objType))).reflectConstructor(objType.member(stringToTermName("<init>")).asMethod)(bytesToObj(_data), tag, null).asInstanceOf[Sendable[_]]
 	}
 }
 
-class Sendable[T](_obj: T, _tag: TypeTag[T], _guid: UUID = null) extends Util
-{
+class Sendable[T](_obj: T, _tag: TypeTag[T], _guid: UUID = null) extends Tools
+{import Sendable._
 	val obj = _obj
 	val guid = if (_guid != null) _guid else typeIDInterface(_tag) + "-" + UUID.randomUUID.toString.split("-", 2)(1): UUID
 	def toBytes = convertToBytes(obj, _tag)
 	override def toString = s"Sendable[${regex("(?:[^\\.]*)$", _tag.tpe)}]\nGUID: ${guid}\nData: ${if (_obj.isInstanceOf[String]) _obj else "<data not displayable>"}"
+	def getPackets(_num: Int): Array[SendableMetadata] =
+	{
+		val toReturn = new Array[SendableMetadata](_num)
+		val byteGroups = toBytes.grouped(_num).toArray
+		for (i <- 0 until _num)
+			toReturn(i) = SendableMetadata(guid, i + 1, _num, byteGroups(i))
+		toReturn
+	}
 }
+

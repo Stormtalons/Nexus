@@ -1,4 +1,4 @@
-package nx
+package nx.util
 
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._

@@ -1,8 +1,8 @@
-package nx
+package nx.util
 
 import scala.collection.mutable.ArrayBuffer
 
-trait Asynch extends Util
+trait Asynch extends Tools
 {
 	private var running = false
 	var done = true

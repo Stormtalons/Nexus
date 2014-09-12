@@ -3,19 +3,22 @@ package nx.comm
 import java.net.{InetSocketAddress, StandardSocketOptions}
 import java.nio.ByteBuffer
 import java.nio.channels.{ServerSocketChannel, SelectionKey, Selector, SocketChannel}
-
-import nx.{Util, Asynch}
+import nx.util.{Asynch, Tools}
 
 import scala.collection.mutable.ArrayBuffer
 
-class SocketHive extends Asynch with Util
+class SocketHive extends Asynch with Tools
 {
 	var abandonHive = false
 	var hiveQueen = Selector.open
+
+	val repository = new MsgCache
+	def getMsg = repository.getMsg
+
 	var populationCap = 1
 	val swarm = ArrayBuffer[SocketChannel]()
 	def primarySwarmling = if (swarm.length > 0) swarm(0) else null
-	def spawn(_host: String, _port: Int) =
+	def spawn(_host: String, _port: Int): Unit =
 	{
 		migrate
 		SocketChannel.open
@@ -24,6 +27,11 @@ class SocketHive extends Asynch with Util
 			.register(hiveQueen, SelectionKey.OP_CONNECT)
 			.asInstanceOf[SocketChannel]
 			.connect(new InetSocketAddress(_host, _port))
+	}
+	def spawn(_swarmling: SocketChannel): Unit =
+	{
+		migrate
+		hatch(_swarmling)
 	}
 	def hatch(_swarmling: SocketChannel): Unit =
 	{
@@ -43,7 +51,7 @@ class SocketHive extends Asynch with Util
 			{
 				_swarmling.keyFor(hiveQueen).cancel
 				_swarmling.register(hiveQueen, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
-				synchronized{swarm += _swarmling}
+				sync(swarm += _swarmling)
 			}
 		}
 	}
@@ -55,7 +63,7 @@ class SocketHive extends Asynch with Util
 	{
 		_swarmling.keyFor(hiveQueen).cancel
 		_swarmling.close
-		synchronized{swarm -= _swarmling}
+		sync(swarm -= _swarmling)
 	}
 
 	val spawningPool = ServerSocketChannel.open
@@ -96,6 +104,13 @@ class SocketHive extends Asynch with Util
 						toMemorize.flip
 						swarmlingMemory.limit(swarmlingMemory.capacity)
 						swarmlingMemory.put(toMemorize)
+						val indexOfEom = indexOf(swarmlingMemory.array, eom: Array[Byte])
+						if (indexOfEom != -1)
+						{
+							val data = new Array[Byte](indexOfEom)
+							swarmlingMemory.get(data)
+							repository.addPart(data: String)
+						}
 
 					case swarmling if swarmling.isWritable =>
 						val swarmlingMemory = swarmling.attachment.asInstanceOf[ByteBuffer]
@@ -105,18 +120,18 @@ class SocketHive extends Asynch with Util
 				}
 		})
 
-	def depart = synchronized
+	def depart = sync(
 	{
 		hiveQueen.close
 		swarm.clear
 		abandonHive = true
-	}
-	def infest = synchronized
+	})
+	def infest = sync(
 	{
 		abandonHive = false
 		hiveQueen = Selector.open
 		populationCap = 1
-	}
+	})
 	def migrate =
 	{
 		depart

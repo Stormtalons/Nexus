@@ -1,74 +1,65 @@
 package nx.comm
 
-import java.net.Socket
+import java.net.{InetSocketAddress, StandardSocketOptions, Socket}
+import java.nio.ByteBuffer
+import java.nio.channels.{SocketChannel, ServerSocketChannel, SelectionKey, Selector}
 
-import nx.{JSON, Main, Util, Asynch}
+import nx.util.{Asynch, JSON, Tools}
+import nx.Main
 
 import scala.collection.mutable.ArrayBuffer
 
-class ConnectionManager extends Asynch with Util
+class ConnectionManager extends Asynch with Tools
 {
-	val outgoingClient = new ClientConnection
-	val clients = new ArrayBuffer[ClientConnection]
+	val callbackRegister = Selector.open
+	val serverChannel = createServerChannel
+	serverChannel.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
+	serverChannel.bind(new InetSocketAddress("0.0.0.0", serverPort))
+	serverChannel.register(callbackRegister, SelectionKey.OP_ACCEPT)
+	val outgoingClient = new SocketHive
+	val clients = new ArrayBuffer[SocketHive]
 	var clientLimit = 5
 
-	val server = new ConnectionListener(_socket => if (clients.length < clientLimit) accept(_socket) else reject(_socket))
-	def accept(_socket: Socket) =
-	{
-		val newClient = new ClientConnection(_socket)
-		synchronized{clients += newClient}
-		log(s"Connection from ${newClient.getHost}/${newClient.getIP} accepted")
-	}
-	def reject(_socket: Socket) =
-	{
-		log(s"Connection from ${_socket.getLocalAddress.getHostName}/${_socket.getLocalAddress.getHostAddress} rejected - at client limit")
-		_socket.close
-	}
-
-	var code = () =>
-	{
-		synchronized
+	addActivity(
+		while (callbackRegister.select > 0)
 		{
-			var i = 0
-			while (i < clients.length)
-			{
-				if (clients(i).recycleable)
+			val availableCallbacks = callbackRegister.selectedKeys.iterator
+			while (availableCallbacks.hasNext)
+				availableCallbacks.next match
 				{
-					clients.remove(i)
-					i = -1
+					case callback if callback.isAcceptable =>
+						if (clients.length < clientLimit)
+						{
+							val newHive = new SocketHive
+							newHive.spawn(callback.channel.asInstanceOf[ServerSocketChannel].accept)
+							sync(clients += newHive)
+						}
+						else
+							callback.channel.asInstanceOf[ServerSocketChannel].accept.close
+					case _ =>
 				}
-				i += 1
-			}
+		})
 
-			clients.foreach(_client =>
-			{
-				_client.processTraffic
-				while (_client.hasMsg)
-				{
-					val msgParts = _client.getMsg.split(sep)
-					if (msgParts(0).equals("gimme"))
-						_client.sendMsg(s"DESKTOP + $sep + ${Main.serialize}")
-					else if (msgParts(0).equals("DESKTOP"))
-						Main.loadState(JSON.parse(msgParts(1)))
-				}
-			})
-		}
-		Thread.sleep(100)
-	}
+	addActivity({
+		outgoingClient.getMsg
+	})
+
 	override def callback = () =>
 	{
 		log("Stopping listening server")
-		server.stop
-		log(s"Disposing of ${clients.length} clients")
-		outgoingClient.dispose
-		clients.foreach(_client => _client.dispose)
-		clients.clear
-		log("Client list cleared")
-		server.waitFor
+		serverChannel.keyFor(callbackRegister).cancel
+		serverChannel.close
 		log("Listening server stopped")
+		log(s"Disposing of ${clients.length} clients")
+		outgoingClient.depart
+		sync({
+			clients.foreach(_client => _client.depart)
+			clients.clear
+		})
+		log("Client list cleared")
 	}
 
-	def connect(_host: String, _port: Int) = log(s"Connection to ${_host}:${_port} ${if (outgoingClient.connect(_host, _port)) "" else "un"} successful")
+	def connect(_host: String, _port: Int) = outgoingClient.spawn(_host, _port)
 
 	run
 }

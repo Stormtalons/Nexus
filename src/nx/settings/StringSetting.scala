@@ -7,9 +7,9 @@ import javafx.scene.control.{Label, TextField}
 import javafx.scene.image.Image
 import javafx.scene.input.{KeyCode, KeyEvent, MouseEvent}
 
-import nx.Util
+import nx.util.Tools
 
-class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) extends Setting[String](_label: String, _value: String, _icon: Image, _scale: Int) with Util
+class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) extends Setting[String](_label: String, _value: String, _icon: Image, _scale: Int) with Tools
 {
 	def this(_label: String, _value: String, _icon: String, _scale: Int) = this(_label, _value, nx.Main.tryGet[Image]({new Image(_icon)}), _scale)
 

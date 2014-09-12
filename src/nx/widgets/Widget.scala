@@ -4,10 +4,9 @@ import java.util.UUID
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout._
+import nx.util.{JSON, Tools}
 
-import nx.{Util, JSON}
-
-abstract class Widget extends StackPane with Util
+abstract class Widget extends StackPane with Tools
 {import scala.language.implicitConversions
 	implicit def stringToOption(s: String) = Some(s)
 	implicit def anyrefToOption(ar: AnyRef) = Some(ar)

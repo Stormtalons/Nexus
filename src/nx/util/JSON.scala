@@ -1,4 +1,4 @@
-package nx
+package nx.util
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -100,7 +100,7 @@ object JSON
 	}
 }
 
-case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None) extends Util
+case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None) extends Tools
 {import scala.language.implicitConversions
 	implicit def strToOption(s: String) = Some(s)
 	implicit def anyrefToOption(ar: AnyRef) = Some(ar)
@@ -116,11 +116,11 @@ case class JSON(_label: Option[String] = Some(""), _value: Option[AnyRef] = None
 
 	private var label_ : String = _label.getOrElse[String]("")
 	def label = label_
-	def label_= (_label: String) = label_ = _label
+	def label_=(_label: String) = label_ = _label
 
 	private var value_ : AnyRef = _value.orNull
 	def value = value_
-	def value_= (_value: AnyRef) = value_ = _value match
+	def value_=(_value: AnyRef) = value_ = _value match
 	{
 		case str: String => str
 		case json: JSON => json.clone
