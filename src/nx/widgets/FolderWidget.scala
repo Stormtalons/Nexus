@@ -130,7 +130,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 	def removeWidget(_w: Widget): Boolean =
 		if (widgets.getChildren.contains(_w))
 		{
-			fx(widgets.getChildren.remove(_w))
+			widgets.getChildren.remove(_w).fx
 			true
 		}
 		else
@@ -190,7 +190,8 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 	confirmConstraintsFor(5, 5)
 
 	def expand: Unit = expand(true)
-	def expand(_keepThumbnail: Boolean): Unit = fx({
+	def expand(_keepThumbnail: Boolean): Unit =
+	{
 		if (!_keepThumbnail)
 			contentPane.getChildren.remove(header)
 		contentPane.getChildren.add(widgets)
@@ -201,9 +202,10 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 			setStyle("-fx-background-color: rgb(100, 100, 100, 0.5)")
 			header.setStyle("-fx-background-color: rgb(0, 0, 0, 0.3)")
 		}
-	})
+	}.fx
 
-	def collapse = fx({
+	def collapse =
+	{
 		if (!contentPane.getChildren.contains(header))
 			contentPane.getChildren.add(header)
 		contentPane.getChildren.remove(widgets)
@@ -214,7 +216,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 			setStyle("-fx-background-color: transparent")
 			header.setStyle("-fx-background-color: transparent")
 		}
-	})
+	}.fx
 
 	def isExpanded: Boolean = contentPane.getChildren.contains(widgets)
 

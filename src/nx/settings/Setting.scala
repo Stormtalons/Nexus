@@ -5,7 +5,7 @@ import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.{GridPane, StackPane}
 
 import nx.Main
-import nx.util.Tools
+import nx.util.{Code, Tools}
 
 object Setting
 {
@@ -15,9 +15,9 @@ object Setting
 
 abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scale: Int) extends GridPane with Tools
 {
-	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, Main.tryGet[Image]({new Image(_icon)}), _scale)
+	def this(_label: String, _value: T, _icon: String, _scale: Int) = this(_label, _value, Main.tryGet(new Image(_icon)), _scale)
 	def this(_label: String, _icon: Image, _scale: Int) = this(_label, null, _icon, _scale)
-	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, Main.tryGet[Image]({new Image(_icon)}), _scale)
+	def this(_label: String, _icon: String, _scale: Int) = this(_label, null, Main.tryGet(new Image(_icon)), _scale)
 	def this(_label: String) = this(_label, null, "", 0)
 	def this(_label: String, _value: T) = this(_label, _value, "", 0)
 	def this(_value: T, _icon: Image, _scale: Int) = this("", _value, _icon, _scale)
@@ -48,10 +48,11 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	private val icon_ : ImageView = new ImageView(_icon)
 	def icon = icon_.getImage
 	def icon_=(_filePath: String): Unit = icon = tryGet(new Image(_filePath))
-	def icon_=(_image: Image): Unit = fx({
+	def icon_=(_image: Image): Unit =
+	{
 		icon_.setImage(_image)
 		doLayout
-	})
+	}.fx
 	def setIconScale(_scale: Int) =
 	{
 		icon_.setFitHeight(_scale)
@@ -62,7 +63,7 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	protected val label_ = new Label(_label)
 	label_.setWrapText(true)
 	def label = label_.getText
-	def label_=(_label: String) = fx(label_.setText(_label))
+	def label_=(_label: String) = label_.setText(_label).fx
 
 	protected var value_ : T = _value
 	def value: String = if (value_ == null) "" else value_.toString
@@ -75,7 +76,8 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 	
 	def endEdit(_save: Boolean)
 
-	def doLayout = fx({
+	def doLayout =
+	{
 		var (c, r) = (0, 0)
 		getChildren.clear
 		if (icon != null)
@@ -96,7 +98,7 @@ abstract class Setting[T >: Null](_label: String, _value: T, _icon: Image, _scal
 				r += 1
 		}
 		add(editStack, c, r)
-	})
+	}.fx
 
 	doLayout
 }

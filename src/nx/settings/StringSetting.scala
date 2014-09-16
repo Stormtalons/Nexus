@@ -16,10 +16,11 @@ class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) e
 	def value_=(_value: String) =
 	{
 		value_ = _value
-		fx({
+
+		{
 			valueLabel_.setText(value)
 			valueEdit_.setText(value)
-		})
+		}.fx
 	}
 
 	protected val valueLabel_ = new Label(value)
@@ -55,14 +56,16 @@ class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) e
 
 	editStack.getChildren.addAll(valueLabel_, valueEdit_)
 
-	def beginEdit = fx({
+	def beginEdit =
+	{
 		valueEdit_.setText(value)
 		valueLabel_.setVisible(false)
 		valueEdit_.setVisible(true)
 		valueEdit_.requestFocus
-	})
+	}.fx
 
-	def endEdit(_save: Boolean) = fx({
+	def endEdit(_save: Boolean) =
+	{
 		editing = true
 		if (_save && valueEdit_.getText.trim.length > 0)
 			value = valueEdit_.getText.trim
@@ -71,5 +74,5 @@ class StringSetting(_label: String, _value: String, _icon: Image, _scale: Int) e
 		valueEdit_.setVisible(false)
 		valueLabel_.setVisible(true)
 		editing = false
-	})
+	}.fx
 }

@@ -16,7 +16,7 @@ class MsgCache extends Tools
 		else
 		{
 			val item = msgBuffer(0)
-			sync(msgBuffer.remove(0))
+			msgBuffer.remove(0).*
 			item
 		}
 

@@ -9,8 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class SocketHive extends Asynch with Tools
 {
-	var abandonHive = false
-	var hiveQueen = Selector.open
+	var hiveQueen: Selector = null
 
 	val repository = new MsgCache
 	def getMsg = repository.getMsg
@@ -36,7 +35,7 @@ class SocketHive extends Asynch with Tools
 	def hatch(_swarmling: SocketChannel): Unit =
 	{
 		if (swarm.length >= populationCap)
-			tryDo(_swarmling.close)
+			_swarmling.close.^
 		else
 		{
 			_swarmling
@@ -51,7 +50,7 @@ class SocketHive extends Asynch with Tools
 			{
 				_swarmling.keyFor(hiveQueen).cancel
 				_swarmling.register(hiveQueen, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
-				sync(swarm += _swarmling)
+				(swarm += _swarmling).*
 			}
 		}
 	}
@@ -63,7 +62,7 @@ class SocketHive extends Asynch with Tools
 	{
 		_swarmling.keyFor(hiveQueen).cancel
 		_swarmling.close
-		sync(swarm -= _swarmling)
+		(swarm -= _swarmling).*
 	}
 
 	val spawningPool = ServerSocketChannel.open
@@ -86,57 +85,55 @@ class SocketHive extends Asynch with Tools
 //			})
 //	}
 
+	def depart =
+	{
+		hiveQueen.close
+		swarm.clear
+		stop
+	}.*
+	def infest =
+	{
+		hiveQueen = Selector.open
+		populationCap = 1
+		run
+	}.*
+	def migrate =
+	{
+		depart
+		waitFor
+		infest
+	}
+	def isInfested = isRunning && primarySwarmling.isConnected
+	def getInfestment = if (isInfested) primarySwarmling.getRemoteAddress else null
+
 	addActivity(
-		while (hiveQueen.select > 0)
+		while (hiveQueen.isOpen && hiveQueen.select > 0)
 		{
 			val hive = hiveQueen.selectedKeys.iterator
 			while (hive.hasNext)
 				hive.next match
 				{
-					case swarmling if swarmling.isAcceptable => hatch(swarmling.channel.asInstanceOf[ServerSocketChannel].accept)
-
-					case swarmling if swarmling.isConnectable => hatch(swarmling.channel.asInstanceOf[SocketChannel])
-
-					case swarmling if swarmling.isReadable =>
-						val swarmlingMemory = swarmling.attachment.asInstanceOf[ByteBuffer]
-						val toMemorize = ByteBuffer.allocate(32 * 1024)
-						swarmling.channel.asInstanceOf[SocketChannel].read(toMemorize)
-						toMemorize.flip
-						swarmlingMemory.limit(swarmlingMemory.capacity)
-						swarmlingMemory.put(toMemorize)
-						val indexOfEom = indexOf(swarmlingMemory.array, eom: Array[Byte])
-						if (indexOfEom != -1)
-						{
-							val data = new Array[Byte](indexOfEom)
-							swarmlingMemory.get(data)
-							repository.addPart(data: String)
-						}
-
-					case swarmling if swarmling.isWritable =>
-						val swarmlingMemory = swarmling.attachment.asInstanceOf[ByteBuffer]
-						swarmlingMemory.flip
-						while (swarmlingMemory.hasRemaining)
-							swarmling.channel.asInstanceOf[SocketChannel].write(swarmlingMemory)
+				case swarmling if swarmling.isAcceptable => hatch(swarmling.channel.asInstanceOf[ServerSocketChannel].accept)
+				case swarmling if swarmling.isConnectable => hatch(swarmling.channel.asInstanceOf[SocketChannel])
+				case swarmling if swarmling.isReadable =>
+					val swarmlingMemory = swarmling.attachment.asInstanceOf[ByteBuffer]
+					val toMemorize = ByteBuffer.allocate(32 * 1024)
+					swarmling.channel.asInstanceOf[SocketChannel].read(toMemorize)
+					toMemorize.flip
+					swarmlingMemory.limit(swarmlingMemory.capacity)
+					swarmlingMemory.put(toMemorize)
+					val indexOfEom = indexOf(swarmlingMemory.array, eom: Array[Byte])
+					if (indexOfEom != -1)
+					{
+						val data = new Array[Byte](indexOfEom)
+						swarmlingMemory.get(data)
+						repository.addPart(data: String)
+					}
+				case swarmling if swarmling.isWritable =>
+					val swarmlingMemory = swarmling.attachment.asInstanceOf[ByteBuffer]
+					swarmlingMemory.flip
+					while (swarmlingMemory.hasRemaining)
+						swarmling.channel.asInstanceOf[SocketChannel].write(swarmlingMemory)
 				}
 		})
-
-	def depart = sync(
-	{
-		hiveQueen.close
-		swarm.clear
-		abandonHive = true
-	})
-	def infest = sync(
-	{
-		abandonHive = false
-		hiveQueen = Selector.open
-		populationCap = 1
-	})
-	def migrate =
-	{
-		depart
-		infest
-	}
-
-	run
 }

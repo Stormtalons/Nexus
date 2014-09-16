@@ -4,8 +4,8 @@ import java.awt.event.ActionListener
 import java.awt.{MenuItem, PopupMenu, SystemTray, TrayIcon}
 import java.io.{File, FileWriter}
 import java.net._
-import java.nio.channels.spi.SelectorProvider
-import javafx.application.Application
+import java.nio.channels.{SelectionKey, Selector}
+import javafx.application.{Platform, Application}
 import javafx.event.ActionEvent
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -22,49 +22,56 @@ import scala.collection.mutable.ArrayBuffer
 
 object Main extends App with Tools with InterfaceShortcuts
 {
+	var serverPort_ = 19265
+	var bufferSize_ = 8192
 
 //	<Dev tools>
 	var useConfig_ = true
-	var instance_ = 1
+	var instance_ = 0
 
-	val logFile = new File(s"log${instance}.log")
-	if (!logFile.exists)
-		logFile.createNewFile
-	val logWriter_ = new FileWriter(logFile, true)
-//	</Dev tools>
-
-	tryDo(
+	var logFile: File = null
+	var logWriter_ : FileWriter = null
+	def setLogFile(_filePath: String) =
 	{
-		new ServerSocket(serverPort).close
+		logFile = new File(_filePath)
+		if (!logFile.exists)
+			logFile.createNewFile
+		logWriter_.close.^
+		logWriter_ = new FileWriter(logFile, true)
+	}
+
+	{
+		createServerChannel.bind(new InetSocketAddress("0.0.0.0", serverPort))
+		instance = 1
 		log("Host instance initialized")
-	}, _e =>
+	}.^(_e =>
 	{
 		useConfig = false
 		instance = 2
 		log("Client instance initialized")
 	})
-	
-	var serverPort_ = 19265
-	var bufferSize_ = 8192
+
+//	</Dev tools>
+
+	var connManager: ConnectionManager = new ConnectionManager
 	var window_ : Window = null
 	var desktopPanel_ : AnchorPane = null
 	var desktop_ : FolderWidget = null
-	var connManager: ConnectionManager = null
 
 	val trayIcon = new TrayIcon(ImageIO.read(getClass.getResource("/nx/res/Stormworks_16.png")))
 	val trayMenu = new PopupMenu
 	val exitItem = new MenuItem("Exit")
-	//TODO: Fix listener creation function
 	exitItem.addActionListener(new ActionListener {def actionPerformed(e: java.awt.event.ActionEvent) = quit})
 	trayMenu.add(exitItem)
 	trayIcon.setPopupMenu(trayMenu)
 	SystemTray.getSystemTray.add(trayIcon)
-	
+
 	new Main().launch
-	
+
 	def serialize = desktop.toJSON.condensed
 	def saveState = if (useConfig) toFile("config.ini", serialize)
-	def loadState(_json: JSON) = fx({
+	def loadState(_json: JSON) =
+	{
 		log("Initializing application state")
 		desktop = new FolderWidget(_json.get[String]("name"))
 		val bg = _json.get[String]("background")
@@ -91,21 +98,19 @@ object Main extends App with Tools with InterfaceShortcuts
 			}
 		if (_json.has[ArrayBuffer[JSON]]("widgets"))
 			addWidgets(desktop, _json.get[ArrayBuffer[JSON]]("widgets"))
-	})
+	}.fx
 
 	def quit =
 	{
-		fx(window.hide)
-		log("Saving application state")
+		window.hide.fx
+		SystemTray.getSystemTray.remove(trayIcon)
 		//TODO: Find string parse error in serialize
 //		ex(Main.saveState)
 		log("Application state saved")
-		log("Stopping connection manager")
 		connManager.stopAndWait
 		log("Connection manager stopped")
 		log("Exiting application", 2)
 		logWriter.close
-		SystemTray.getSystemTray.remove(Main.trayIcon)
 	}
 }
 
@@ -145,11 +150,9 @@ class Main extends Application with Tools with InterfaceShortcuts
 
 		mainPanel.getChildren.add(devToolbar)
 
-		addFilter[WindowEvent](stg, WindowEvent.WINDOW_HIDING, Main.quit)
+		addFilter(stg, WindowEvent.WINDOW_HIDING, Main.quit)
 		stg.setScene(new Scene(mainPanel))
+		stg.setTitle("Instance - " + instance)
 		stg.show
-
-		Main.connManager = new ConnectionManager
-		Main.connManager.run
 	}
 }
