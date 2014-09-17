@@ -63,11 +63,12 @@ class Sendable[T](_obj: T, _tag: TypeTag[T], _guid: UUID = null) extends Tools
 	override def toString = s"Sendable[${regex("(?:[^\\.]*)$", _tag.tpe)}]\nGUID: ${guid}\nData: ${if (_obj.isInstanceOf[String]) _obj else "<data not displayable>"}"
 	def getPackets(_num: Int): Array[SendableMetadata] =
 	{
-		val toReturn = new Array[SendableMetadata](_num)
-		val byteGroups = toBytes.grouped(_num).toArray
-		for (i <- 0 until _num)
-			toReturn(i) = SendableMetadata(guid, i + 1, _num, byteGroups(i))
-		toReturn
+//		val toReturn = new Array[SendableMetadata](_num)
+//		val byteGroups = toBytes.grouped(_num).toArray.zipWithIndex.map{case(data, i) => SendableMetadata(guid, i + 1, _num, data)}
+//		byteGroups.zipWithIndex.foreach{case(data, i) => toReturn(i) = SendableMetadata(guid, i + 1, _num, data)}
+//		(0 until _num).foreach(i => toReturn(i) = SendableMetadata(guid, i + 1, _num, byteGroups(i)))
+//		toReturn
+		toBytes.grouped(_num).toArray.zipWithIndex.map{case(data, i) => SendableMetadata(guid, i + 1, _num, data)}
 	}
 }
 

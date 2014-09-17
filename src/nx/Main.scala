@@ -36,7 +36,7 @@ object Main extends App with Tools with InterfaceShortcuts
 		logFile = new File(_filePath)
 		if (!logFile.exists)
 			logFile.createNewFile
-		logWriter_.close.^
+		logWriter_.close.^#
 		logWriter_ = new FileWriter(logFile, true)
 	}
 
@@ -44,12 +44,12 @@ object Main extends App with Tools with InterfaceShortcuts
 		createServerChannel.bind(new InetSocketAddress("0.0.0.0", serverPort))
 		instance = 1
 		log("Host instance initialized")
-	}.^(_e =>
+	}.^^
 	{
 		useConfig = false
 		instance = 2
 		log("Client instance initialized")
-	})
+	}
 
 //	</Dev tools>
 

@@ -35,7 +35,7 @@ class SocketHive extends Asynch with Tools
 	def hatch(_swarmling: SocketChannel): Unit =
 	{
 		if (swarm.length >= populationCap)
-			_swarmling.close.^
+			_swarmling.close.^#
 		else
 		{
 			_swarmling
@@ -50,7 +50,7 @@ class SocketHive extends Asynch with Tools
 			{
 				_swarmling.keyFor(hiveQueen).cancel
 				_swarmling.register(hiveQueen, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
-				(swarm += _swarmling).*
+				(swarm += _swarmling).^*
 			}
 		}
 	}
@@ -62,7 +62,7 @@ class SocketHive extends Asynch with Tools
 	{
 		_swarmling.keyFor(hiveQueen).cancel
 		_swarmling.close
-		(swarm -= _swarmling).*
+		(swarm -= _swarmling).^*
 	}
 
 	val spawningPool = ServerSocketChannel.open
@@ -90,13 +90,13 @@ class SocketHive extends Asynch with Tools
 		hiveQueen.close
 		swarm.clear
 		stop
-	}.*
+	}.^*
 	def infest =
 	{
 		hiveQueen = Selector.open
 		populationCap = 1
 		run
-	}.*
+	}.^*
 	def migrate =
 	{
 		depart

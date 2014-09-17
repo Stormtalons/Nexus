@@ -1,6 +1,6 @@
 package nx.util
 
-import java.io.{FileWriter, ByteArrayInputStream, ByteArrayOutputStream, File}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
 import java.nio.channels.spi.SelectorProvider
 import java.nio.file.{Files, Path, Paths}
 import java.text.SimpleDateFormat
@@ -13,7 +13,6 @@ import javafx.stage.Window
 import javax.imageio.ImageIO
 
 import nx.Main
-import nx.Main._
 import nx.widgets.FolderWidget
 
 import scala.language.{implicitConversions, postfixOps}
@@ -56,7 +55,7 @@ trait Tools
 	def instance = Main.instance_
 	def instance_=(_instance: Int) = Main.setLogFile(s"log${Main.instance_ = _instance;_instance}.log")
 	def logWriter = Main.logWriter_
-	def log(_str: String, _lines: Int = 1): Unit = {println(_str);logWriter.write(s"Instance ${instance} - ${new SimpleDateFormat("yyyyMMdd.hh:mm:ss").format(Calendar.getInstance.getTime)}: ${_str}${"\r\n"^_lines}").^*}
+	def log(_str: String, _lines: Int = 1): Unit = {println(_str);logWriter.write(s"Instance ${instance} - ${new SimpleDateFormat("yyyyMMdd.hh:mm:ss").format(Calendar.getInstance.getTime)}: ${_str}${"\r\n"^_lines}").^^*}
 //	</Dev tools>
 
 	def window = Main.window_
@@ -124,11 +123,7 @@ trait Tools
 		-1
 	}
 
-//	def tryDo(_code: => Unit, _exHandler: Exception => Unit = null) = try {_code;true} catch {case e: Exception => if (_exHandler != null){_exHandler(e)};false}
 	def tryGet[T <: Any](_code: => T, _dft: => T = null): T = try _code catch {case e: Exception => _dft}
-//	def ex(_code: => Unit) = new Thread(new Runnable {def run = _code}).start
-//	def fx(_code: => Unit) = if (Platform.isFxApplicationThread) _code.^ else Platform.runLater(new Runnable {def run = _code.^})
-//	def sync(_code: => Unit) = synchronized{_code}
 	def regex[T <: Any](_regex: String, _input: T) =
 	{
 		val m = Pattern.compile(_regex).matcher(_input.toString)

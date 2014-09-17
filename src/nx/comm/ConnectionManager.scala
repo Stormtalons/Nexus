@@ -34,7 +34,7 @@ class ConnectionManager extends Asynch with Tools
 						{
 							val newHive = new SocketHive
 							newHive.spawn(callback.channel.asInstanceOf[ServerSocketChannel].accept)
-							(clients += newHive).*
+							(clients += newHive).^*
 						}
 						else
 							callback.channel.asInstanceOf[ServerSocketChannel].accept.close
@@ -47,7 +47,7 @@ class ConnectionManager extends Asynch with Tools
 	})
 
 	addCallback({
-		callbackRegister.close.^*
+		callbackRegister.close.^^*
 		log("Listening server stopped")
 		if (outgoingClient.isInfested)
 		{

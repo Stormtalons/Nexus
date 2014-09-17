@@ -21,7 +21,7 @@ trait Asynch extends Tools
 			for (act <- activities)
 				(while (running && act.active)
 				{
-					act.^(_e =>
+					act.^^^(_e =>
 					{
 						log(s"Error occurred running activity: ${_e}");
 						act.active = false
@@ -31,7 +31,7 @@ trait Asynch extends Tools
 			while (running)
 				Thread.sleep(50)
 			for (cb <- callbacks)
-					cb.^
+					cb.^^
 			done = true
 		}.x
 	}
