@@ -21,11 +21,12 @@ trait Asynch extends Tools
 			for (act <- activities)
 				(while (running && act.active)
 				{
-					act.^^^(_e =>
-					{
-						log(s"Error occurred running activity: ${_e}");
-						act.active = false
-					})
+					act.^^#
+//					(_e =>
+//					{
+//						log(s"Error occurred running activity: ${_e}");
+//						act.active = false
+//					})
 					Thread.sleep(1)
 				}).x
 			while (running)

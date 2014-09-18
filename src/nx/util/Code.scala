@@ -11,6 +11,7 @@ class Code[T <: Any](code: => T) extends Tools
 	def ^^ : Boolean = ^^()
 	def ^^(_itBroke: => Unit = null): Boolean = try {code;true} catch {case e: Exception => _itBroke;false}
 	def ^^^(_itBroke: Exception => Unit): Boolean = try {code;true} catch {case e: Exception => if (_itBroke != null){_itBroke(e)};false}
+	def ^^# = ^^^(_e => _e.printStackTrace)
 	def ^* = synchronized{code}
 	def ^^* : Boolean = ^^*(null)
 	def ^^*(_itBroke: => Unit): Boolean = ^^(_itBroke)^*

@@ -2,7 +2,7 @@ package nx.util
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File}
 import java.nio.channels.spi.SelectorProvider
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.{StandardOpenOption, Files, Path, Paths}
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 import java.util.{Calendar, UUID}
@@ -13,6 +13,7 @@ import javafx.stage.Window
 import javax.imageio.ImageIO
 
 import nx.Main
+import nx.comm.sendable.Sendable
 import nx.widgets.FolderWidget
 
 import scala.language.{implicitConversions, postfixOps}
@@ -20,7 +21,7 @@ import scala.util.control.Breaks._
 
 trait Tools
 {
-	implicit def codeToCode[T <: Any](_code: => T) = new Code(_code)
+	implicit def anyToCode[T <: Any](_code: => T) = new Code(_code)
 
 	case class Repeat(_val: Any){def ^(_i: Int): String = {var s = "";for (i <- 0 until _i) s += _val.toString;s}}
 	implicit def toRpt(_val: Byte) = Repeat(_val.asInstanceOf[Any])
@@ -86,6 +87,7 @@ trait Tools
 //	implicit def strToJSON(_str: String): JSON = JSON.parse(_str)
 	implicit def strToUUID(_str: String): UUID = UUID.fromString(_str)
 	implicit def strToImg(_str: String): Image = SwingFXUtils.toFXImage(ImageIO.read(getClass.getResource(_str)), null).asInstanceOf[Image]
+	implicit def strToSendable(_str: String): Sendable[String] = new Sendable[String](_str)
 
 	implicit def pathToBytes(_path: Path): Array[Byte] = if (fileExists(_path)) Files.readAllBytes(_path) else Array[Byte]()
 	implicit def pathToStr(_path: Path): String = _path: Array[Byte]
@@ -93,9 +95,10 @@ trait Tools
 	implicit def UUIDToBytes(_uuid: UUID): Array[Byte] = _uuid.toString: Array[Byte]
 	implicit def UUIDToStr(_uuid: UUID): String = _uuid.toString
 
-	implicit def fileToBytes(_file: File): Array[Byte] = if (fileExists(_file)) _file: Path else Array[Byte]()
+	implicit def fileToBytes(_file: File): Array[Byte] = if (fileExists(_file)) (_file: Path): Array[Byte] else Array[Byte]()
 	implicit def fileToStr(_file: File): String = if (fileExists(_file)) _file: Array[Byte] else ""
 	implicit def fileToPath(_file: File): Path = if (fileExists(_file)) _file.getPath: Path else null
+	implicit def fileToSendable(_file: File): Sendable[Array[Byte]] = new Sendable[Array[Byte]](_file.getPath: Array[Byte])
 
 	implicit def imgToBytes(_img: Image): Array[Byte] =
 	{
@@ -108,7 +111,7 @@ trait Tools
 	def fileExists(_path: Path): Boolean = Files.exists(_path)
 	def fileExists(_filePath: String): Boolean = fileExists(_filePath: Path)
 	def fileText(_filePath: String): String = (_filePath: Path): Array[Byte]
-	def toFile(_filePath: String, _bytes: Array[Byte]): Unit = Files.write(_filePath: Path, _bytes)
+	def toFile(_filePath: String, _bytes: Array[Byte]): Unit = Files.write(_filePath: Path, _bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 	def toFile(_filePath: String, _str: String): Unit = toFile(_filePath, _str: Array[Byte])
 
 	def indexOf(_bytes: Array[Byte], _toFind: Array[Byte]): Int =

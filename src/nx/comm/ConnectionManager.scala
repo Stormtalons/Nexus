@@ -2,25 +2,48 @@ package nx.comm
 
 import java.net.{InetSocketAddress, StandardSocketOptions}
 import java.nio.channels.{ServerSocketChannel, SelectionKey, Selector}
+import javafx.scene.image.Image
 
+import nx.Main
+import nx.comm.sendable.Sendable
 import nx.util.{Asynch, Tools}
 
 import scala.collection.mutable.ArrayBuffer
 
-class ConnectionManager extends Asynch with Tools
+class ConnectionManager(_port: Int) extends Asynch with Tools
 {
+	def this() = this(Main.serverPort_)
+
 	val callbackRegister = Selector.open
 	val serverChannel = createServerChannel
 	serverChannel.setOption[java.lang.Boolean](StandardSocketOptions.SO_REUSEADDR, true)
 	serverChannel.configureBlocking(false)
-	if (instance == 1)
-	{
-		serverChannel.bind(new InetSocketAddress("0.0.0.0", serverPort))
+//	if (instance == 1)
+//	{
+		serverChannel.bind(new InetSocketAddress(_port))
 		serverChannel.register(callbackRegister, SelectionKey.OP_ACCEPT)
-	}
+//	}
 	val outgoingClient = new SocketHive
 	val clients = new ArrayBuffer[SocketHive]
 	var clientLimit = 5
+
+	def connect(_host: String, _port: Int) = outgoingClient.spawn(_host, _port)
+
+	def send(_obj: Sendable[_]) =
+	{
+		while (!outgoingClient.isInfested) Thread.sleep(10)
+		outgoingClient.command(_obj)
+	}
+
+	def printConnections =
+	{
+		(clients :+ outgoingClient).foreach(peer =>
+		{
+			println(s"Peer: ${peer}")
+			peer.printSwarm
+			println
+		})
+	}
 
 	addActivity(
 		while (callbackRegister.isOpen && callbackRegister.select > 0)
@@ -43,7 +66,19 @@ class ConnectionManager extends Asynch with Tools
 		})
 
 	addActivity({
-		outgoingClient.getMsg
+		(clients :+ outgoingClient).foreach(peer =>
+		{
+			val msg = peer.getMsg
+			if (msg != null)
+			{
+				msg.obj match
+				{
+					case str: String => println(msg)
+					case img: Image =>
+					case _ =>
+				}
+			}
+		})
 	})
 
 	addCallback({
@@ -61,8 +96,6 @@ class ConnectionManager extends Asynch with Tools
 			clients.clear
 		}
 	})
-
-	def connect(_host: String, _port: Int) = outgoingClient.spawn(_host, _port)
 
 	run
 }

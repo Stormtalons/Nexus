@@ -1,35 +1,21 @@
 package nx
 
-import java.util.Scanner
+import nx.comm.ConnectionManager
+import nx.comm.sendable.{PartialSendable, Sendable}
+import nx.util.{Tools}
 
-import nx.util.{Asynch, Tools}
+import scala.language.postfixOps
 
 object TestingStage extends App with Tools
 {
-	val as = new Asynch{}
-
-	as.addActivity({
-		println("starting count")
-		(1 to 3).foreach(i => print(i + ", "))
-		println("\nwaiting.\n")
-		Thread.sleep(3000)
-	})
-
-	as.addActivity({
-		println("faster activity")
-		Thread.sleep(500)
-	})
-
-	as.addCallback({
-		println("done running.")
-	})
-
-	as.run
-
-	new Scanner(System.in).nextLine
-
-	println("stopping and waiting")
-	as.stopAndWait
-
-	println("exiting program.")
+	{
+		val host = new ConnectionManager(9998)
+		val client = new ConnectionManager(9997)
+		client.connect("127.0.0.1", 9998)
+		client.send(new Sendable("Line of stringderp."^10))
+		Thread.sleep(200)
+		println
+		client.stop
+		host.stop
+	}^^^{e => e.printStackTrace;System.exit(0)}
 }

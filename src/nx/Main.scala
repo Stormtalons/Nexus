@@ -20,6 +20,10 @@ import nx.widgets.{FileWidget, FolderWidget}
 
 import scala.collection.mutable.ArrayBuffer
 
+//	<Dev tools>
+
+//	</Dev tools>
+
 object Main extends App with Tools with InterfaceShortcuts
 {
 	var serverPort_ = 19265
@@ -50,7 +54,6 @@ object Main extends App with Tools with InterfaceShortcuts
 		instance = 2
 		log("Client instance initialized")
 	}
-
 //	</Dev tools>
 
 	var connManager: ConnectionManager = new ConnectionManager
@@ -146,7 +149,9 @@ class Main extends Application with Tools with InterfaceShortcuts
 		cnct.setOnAction(handle[ActionEvent](Main.connManager.connect("127.0.0.1", serverPort)))
 		val test = new Button("Test")
 		test.setOnAction(handle[ActionEvent](toFile("test.txt", "DESKTOP" + sep + Main.serialize + eom)))
-		devToolbar.getChildren.addAll(newFolder, json, cnct, test)
+		val swarmlings = new Button("Peer sockets")
+		swarmlings.setOnAction(handle[ActionEvent](Main.connManager.printConnections))
+		devToolbar.getChildren.addAll(newFolder, json, cnct, test, swarmlings)
 
 		mainPanel.getChildren.add(devToolbar)
 
