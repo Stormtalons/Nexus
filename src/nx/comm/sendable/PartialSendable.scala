@@ -21,5 +21,5 @@ class PartialSendable(_guid: UUID, _num: Int) extends Tools
 	def isComplete: Boolean = parts.filter(_ == null).length == 0
 	def assemble: Sendable[_] = if (isComplete) Sendable.construct(parts) else null
 
-	override def toString = s"PartialSendable[${regex("(?:[^\\.]*)$", Sendable.typeFromGUID(guid).tpe)}]\nGUID: ${guid}\n${parts.zipWithIndex.map{case(p, i) => s"Part ${i + 1}: ${if (p == null) "Empty" else "Filled"}"}.mkString("\r\n")}"
+	override def toString = s"PartialSendable[${regex("(?:[^\\.]*)$", Sendable.typeFromGUID(guid))}]\nGUID: ${guid}\n${parts.zipWithIndex.map{case(p, i) => s"Part ${i + 1}: ${if (p == null) "Empty" else "Filled"}"}.mkString("\r\n")}"
 }
