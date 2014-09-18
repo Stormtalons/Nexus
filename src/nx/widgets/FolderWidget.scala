@@ -11,6 +11,7 @@ import javafx.scene.input._
 import javafx.scene.layout._
 import javafx.stage.FileChooser
 
+import nx.comm.sendable.Sendable
 import nx.settings.StringSetting
 import nx.util.{JSON, InterfaceShortcuts, Tools}
 
@@ -30,7 +31,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 	{
 		this(_file.getName)
 		if (_file.isDirectory)
-			_file.listFiles.foreach(_f => addWidget(new FileWidget(_f, Desktop.getDesktop.open(_f))))
+			_file.listFiles.foreach(_f => addWidget(new FileWidget(_f)))
 	}
 
 	private var background_ : Image = null
@@ -87,7 +88,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 		{
 			val toAdd: Widget =
 				if (list.get(i).isFile)
-					new FileWidget(list.get(i), Desktop.getDesktop.open(list.get(i)))
+					new FileWidget(list.get(i))
 				else
 					new FolderWidget(list.get(i))
 			if (!addWidget(toAdd, row, col))
@@ -238,8 +239,9 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 			_evt.consume
 		}))
 
-	def toJSON: JSON =
+	def toSendable =
 	{
+		val items = new ArrayBuffer[Sendable[_]]
 		val toReturn = JSON()
 
 		toReturn += JSON("guid", guid: String)
@@ -247,15 +249,26 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 		toReturn += JSON("name", name)
 		toReturn += JSON("expanded", isExpanded.toString)
 		if (background != null)
-			toReturn += JSON("background", (background: Array[Byte]).mkString(","))
+		{
+			val si = new Sendable(background)
+			items += si
+			toReturn += JSON("background", si.guid: String)
+		}
 
-//		val widgets = new ArrayBuffer[JSON]
-//		getWidgets[Widget].foreach(_w => widgets += _w.toJSON)
 		val widgets = getWidgets[Widget]
 		if (widgets.length > 0)
-			toReturn += JSON("widgets", widgets.map(_.toJSON): ArrayBuffer[JSON])
+		{
+			val childWidgets = new ArrayBuffer[JSON]
+			widgets.foreach(_w =>
+			{
+				val (json, widgetItems) = _w.toSendable
+				childWidgets += json
+				items ++= widgetItems
+			})
+			toReturn += JSON("widgets", childWidgets)
+		}
 
-		toReturn
+		(toReturn, items.toArray)
 	}
 }
 object FolderWidget

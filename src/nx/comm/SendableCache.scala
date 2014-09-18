@@ -7,11 +7,11 @@ import nx.util.Tools
 
 import scala.collection.mutable._
 
-class MsgCache extends Tools
+class SendableCache extends Tools
 {
-	val msgBuffer = new ArrayBuffer[Sendable[_]]
-	def hasMsg = msgBuffer.length > 0
-	def getMsg: Sendable[_] = if (hasMsg) msgBuffer.remove(0).^* else null
+	val itemBuffer = new ArrayBuffer[Sendable[_]]
+	def hasItem = itemBuffer.length > 0
+	def getItem: Sendable[_] = if (hasItem) itemBuffer.remove(0).^* else null
 
 	val partials = new HashMap[UUID, PartialSendable]
 	def addPart(_str: String) =
@@ -29,7 +29,7 @@ class MsgCache extends Tools
 
 		if (partial.addPart(smd))
 		{
-			(msgBuffer += partial.assemble).^*
+			(itemBuffer += partial.assemble).^*
 			partials.remove(partial.guid)
 		}
 	}

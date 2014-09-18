@@ -4,6 +4,7 @@ import java.util.UUID
 import javafx.event.EventHandler
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout._
+import nx.comm.sendable.Sendable
 import nx.util.{JSON, Tools}
 
 abstract class Widget extends StackPane with Tools
@@ -38,5 +39,5 @@ abstract class Widget extends StackPane with Tools
 		addEventFilter(MouseEvent.MOUSE_CLICKED, onClick_)
 	}
 
-	def toJSON: JSON
+	def toSendable: (JSON, Array[Sendable[_]])
 }

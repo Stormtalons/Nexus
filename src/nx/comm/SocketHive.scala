@@ -12,9 +12,12 @@ class SocketHive extends Asynch with Tools
 {
 	var hiveQueen: Selector = null
 
-	val repository = new MsgCache
-	def hasMsg = repository.hasMsg
-	def getMsg = repository.getMsg
+	val items = new SendableCache
+	def hasItem = items.hasItem
+	def getItem = items.getItem
+	val msgs = new ArrayBuffer[String]
+	def hasMsg = msgs.length > 0
+	def getMsg = msgs.remove(0).^*
 
 	var populationCap = 1
 	val swarm = new ArrayBuffer[SocketChannel]
@@ -112,15 +115,32 @@ class SocketHive extends Asynch with Tools
 					case swarmling if swarmling.isAcceptable => hatch(swarmling.channel.asInstanceOf[ServerSocketChannel].accept)
 					case swarmling if swarmling.isConnectable => hatch(swarmling.channel.asInstanceOf[SocketChannel])
 					case swarmling if swarmling.isReadable =>
-						val toMemorize = ByteBuffer.allocate(32 * 1024)
-						swarmling.channel.asInstanceOf[SocketChannel].read(toMemorize)
-						toMemorize.flip
-						val indexOfEom = indexOf(toMemorize.array, eom: Array[Byte])
-						if (indexOfEom != -1)
+						var bytesRead = 0
+						val bytes = new ArrayBuffer[Byte]
+						do
 						{
-							val data = new Array[Byte](indexOfEom)
-							toMemorize.get(data)
-							repository.addPart(data: String)
+							val toMemorize = ByteBuffer.allocate(32 * 1024)
+							bytesRead = swarmling.channel.asInstanceOf[SocketChannel].read(toMemorize)
+							if (bytesRead == -1)
+								bytes.clear
+							else if (bytesRead > 0)
+							{
+								toMemorize.flip
+								var data = new Array[Byte](bytesRead)
+								toMemorize.get(data, 0, bytesRead)
+								val indexOfEom = indexOf(data, eom: Array[Byte])
+								if (indexOfEom != -1)
+									data = data.splitAt(indexOfEom)._1
+								bytes ++= data
+							}
+						} while(bytesRead > 0)
+
+						if (bytesRead == 0)
+						{
+							if (bytes(0) == 0)
+								msgs += (bytes.drop(1).toArray: String)
+							else
+								items.addPart(bytes.drop(1).toArray: String)
 						}
 				}
 		})

@@ -2,6 +2,7 @@ package nx.comm
 
 import java.net.{InetSocketAddress, StandardSocketOptions}
 import java.nio.channels.{ServerSocketChannel, SelectionKey, Selector}
+import java.util.UUID
 import javafx.scene.image.Image
 
 import nx.Main
@@ -33,6 +34,11 @@ class ConnectionManager(_port: Int) extends Asynch with Tools
 	{
 		while (!outgoingClient.isInfested) Thread.sleep(10)
 		outgoingClient.command(_obj)
+	}
+
+	def requestItem(_guid: UUID) =
+	{
+
 	}
 
 	def printConnections =
@@ -68,14 +74,30 @@ class ConnectionManager(_port: Int) extends Asynch with Tools
 	addActivity({
 		(clients :+ outgoingClient).foreach(peer =>
 		{
-			val msg = peer.getMsg
-			if (msg != null)
+			if (peer.hasItem)
 			{
-				msg.obj match
+				val item = peer.getItem
+				item.obj match
 				{
-					case str: String => println(msg)
+					case str: String => println(item)
 					case img: Image =>
 					case _ =>
+				}
+			}
+			if (peer.hasMsg)
+			{
+				val msg = peer.getMsg.split("\\|")
+				if (msg(0).equals("GET"))
+				{
+					if (msg(1).equals("REPLICATION"))
+					{
+
+					}
+					else if (msg(1).equals("ITEM"))
+					{
+
+					}
+
 				}
 			}
 		})

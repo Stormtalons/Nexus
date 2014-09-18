@@ -25,10 +25,10 @@ object Sendable extends Tools
 			(_data: Array[Byte]) => _data: Image
 		),
 
-		typeTag[Array[Byte]] -> (
-			typeTag[Sendable[Array[Byte]]],
-			(_fileData: Array[Byte]) => _fileData,
-			(_data: Array[Byte]) => _data
+		typeTag[RemoteFile] -> (
+			typeTag[Sendable[RemoteFile]],
+			(_fileData: RemoteFile) => _fileData.fileName: Array[Byte],
+			(_data: Array[Byte]) => new RemoteFile(_data: String)
 		)
 	)
 	def getReflectionTools[T: TypeTag] =
@@ -36,12 +36,11 @@ object Sendable extends Tools
 		val typeMeta = typeMetadata(typeTag[T])
 		(typeMeta._1.tpe, typeMeta._1.mirror, typeMeta._3.asInstanceOf[Array[Byte] => T])
 	}
-	def convertToBytes[T: TypeTag](_obj: T) = typeMetadata(typeTag[T])._2.asInstanceOf[T => Array[Byte]](_obj)
 
 	private val typeIDIndex_ = XMap[String, TypeTag[_]](
 		"00000001" <-> typeTag[String],
 		"00000002" <-> typeTag[Image],
-		"00000003" <-> typeTag[Array[Byte]]
+		"00000003" <-> typeTag[RemoteFile]
 	)
 	def typeIDInterface(_str: String) = typeIDIndex_(_str).asInstanceOf[TypeTag[_]]
 	def typeIDInterface[T: TypeTag] = typeIDIndex_(typeTag[T]).asInstanceOf[String]
@@ -50,7 +49,7 @@ object Sendable extends Tools
 	def construct(_partials: Array[SendableMetadata]): Sendable[_] = construct(_partials(0).guid, _partials.map(_.data).flatten)
 	def construct(_guid: UUID, _data: Array[Byte]): Sendable[_] =
 	{
-		val tag: TypeTag[_] = typeFromGUID(_guid)
+		val tag = typeFromGUID(_guid)
 		val (objType, mirror, bytesToObj) = getReflectionTools(tag)
 		mirror.reflectClass(mirror.classSymbol(mirror.runtimeClass(objType))).reflectConstructor(objType.member(stringToTermName("<init>")).asMethod)(bytesToObj(_data), _guid, tag).asInstanceOf[Sendable[_]]
 	}
@@ -60,7 +59,7 @@ class Sendable[T](_obj: T, _guid: UUID = null)(implicit tag: TypeTag[T]) extends
 {import Sendable._
 	var obj = _obj
 	var guid = if (_guid != null) _guid else typeIDInterface(tag) + "-" + UUID.randomUUID.toString.split("-", 2)(1): UUID
-	def toBytes = convertToBytes[T](obj)
+	def toBytes = typeMetadata(typeTag[T])._2.asInstanceOf[T => Array[Byte]](obj)
 	def getPackets(_num: Int): Array[SendableMetadata] =
 	{
 		val bytes = toBytes

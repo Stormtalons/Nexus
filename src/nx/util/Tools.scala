@@ -116,7 +116,7 @@ trait Tools
 
 	def indexOf(_bytes: Array[Byte], _toFind: Array[Byte]): Int =
 	{
-		for (i <- 0 until _bytes.length - _toFind.length)
+		for (i <- 0 until _bytes.length - _toFind.length + 1)
 			breakable({
 				for (j <- 0 until _toFind.length)
 					if (_bytes(i + j) != _toFind(j))

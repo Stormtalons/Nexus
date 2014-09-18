@@ -5,6 +5,7 @@ import java.awt.{MenuItem, PopupMenu, SystemTray, TrayIcon}
 import java.io.{File, FileWriter}
 import java.net._
 import java.nio.channels.{SelectionKey, Selector}
+import java.util.UUID
 import javafx.application.{Platform, Application}
 import javafx.event.ActionEvent
 import javafx.scene.Scene
@@ -15,9 +16,11 @@ import javafx.stage.{Stage, Window, WindowEvent}
 import javax.imageio.ImageIO
 
 import nx.comm.ConnectionManager
+import nx.comm.sendable.Sendable
 import nx.util.{JSON, InterfaceShortcuts, Tools}
 import nx.widgets.{FileWidget, FolderWidget}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 //	<Dev tools>
@@ -57,6 +60,7 @@ object Main extends App with Tools with InterfaceShortcuts
 //	</Dev tools>
 
 	var connManager: ConnectionManager = new ConnectionManager
+	val receivedItems = new mutable.HashMap[UUID, Sendable[_]]()
 	var window_ : Window = null
 	var desktopPanel_ : AnchorPane = null
 	var desktop_ : FolderWidget = null
@@ -71,9 +75,9 @@ object Main extends App with Tools with InterfaceShortcuts
 
 	new Main().launch
 
-	def serialize = desktop.toJSON.condensed
+	def serialize = desktop.toSendable._1.condensed
 	def saveState = if (useConfig) toFile("config.ini", serialize)
-	def loadState(_json: JSON) =
+	def loadState(_json: JSON, _isRemote: Boolean = false) =
 	{
 		log("Initializing application state")
 		desktop = new FolderWidget(_json.get[String]("name"))
@@ -144,7 +148,7 @@ class Main extends Application with Tools with InterfaceShortcuts
 		val newFolder = new Button("Add Folder")
 		newFolder.setOnAction(handle[ActionEvent](desktop.addWidget(new FolderWidget)))
 		val json = new Button("Desktop To JSON")
-		json.setOnAction(handle[ActionEvent](log(desktop.toJSON + "\n\n")))
+		json.setOnAction(handle[ActionEvent](log(desktop.toSendable._1 + "\n\n")))
 		val cnct = new Button("Connect to self")
 		cnct.setOnAction(handle[ActionEvent](Main.connManager.connect("127.0.0.1", serverPort)))
 		val test = new Button("Test")
