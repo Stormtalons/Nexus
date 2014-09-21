@@ -146,15 +146,15 @@ class Main extends Application with Tools with InterfaceShortcuts
 
 		val devToolbar = new HBox
 		val newFolder = new Button("Add Folder")
-		newFolder.setOnAction(handle[ActionEvent](desktop.addWidget(new FolderWidget)))
+		newFolder.setOnAction(handle[ActionEvent](() => desktop.addWidget(new FolderWidget)))
 		val json = new Button("Desktop To JSON")
-		json.setOnAction(handle[ActionEvent](log(desktop.toSendable._1 + "\n\n")))
+		json.setOnAction(handle[ActionEvent](() => log(desktop.toSendable._1 + "\n\n")))
 		val cnct = new Button("Connect to self")
-		cnct.setOnAction(handle[ActionEvent](Main.connManager.connect("127.0.0.1", serverPort)))
+		cnct.setOnAction(handle[ActionEvent](() => Main.connManager.connect("127.0.0.1", serverPort)))
 		val test = new Button("Test")
-		test.setOnAction(handle[ActionEvent](toFile("test.txt", "DESKTOP" + sep + Main.serialize + eom)))
+		test.setOnAction(handle[ActionEvent](() => toFile("test.txt", "DESKTOP" + sep + Main.serialize + eom)))
 		val swarmlings = new Button("Peer sockets")
-		swarmlings.setOnAction(handle[ActionEvent](Main.connManager.printConnections))
+		swarmlings.setOnAction(handle[ActionEvent](() => Main.connManager.printConnections))
 		devToolbar.getChildren.addAll(newFolder, json, cnct, test, swarmlings)
 
 		mainPanel.getChildren.add(devToolbar)

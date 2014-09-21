@@ -64,7 +64,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 
 	protected val headerMenu = new ContextMenu
 	protected val remove = new MenuItem("Delete")
-	remove.setOnAction(handle[ActionEvent](desktop.removeWidget(FolderWidget.this)))
+	remove.setOnAction(handle[ActionEvent](() => desktop.removeWidget(FolderWidget.this)))
 
 	headerMenu.getItems.addAll(remove)
 	header.setOnContextMenuRequested(handleEvt[ContextMenuEvent](_evt =>
@@ -223,14 +223,14 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 
 	protected val widgetMenu = new ContextMenu
 	protected val addFolder = new MenuItem("Add Folder")
-	addFolder.setOnAction(handle[ActionEvent](addWidget(new FolderWidget("New Folder"))))
+	addFolder.setOnAction(addWidget(new FolderWidget("New Folder")))
 	protected val setBackgroundItem = new MenuItem("Choose Background")
-	setBackgroundItem.setOnAction(handle[ActionEvent](
+	setBackgroundItem.setOnAction(
 	{
 		val bg = new FileChooser().showOpenDialog(window)
 		if (bg != null)
 			background = new Image(bg.toURI.toURL.toString)
-	}))
+	})
 	widgetMenu.getItems.addAll(addFolder, setBackgroundItem)
 	widgets.setOnContextMenuRequested(handleEvt[ContextMenuEvent](_evt =>
 		if (_evt.getSource.isInstanceOf[Node])

@@ -31,13 +31,13 @@ class FileWidget(_fileName: String) extends Widget with Content[RemoteFile] with
 
 	protected val rightClickMenu = new ContextMenu
 	protected val download = new MenuItem("Download")
-	download.setOnAction(handle[ActionEvent](
+	download.setOnAction(
 	{
 		if (!content.obj.hasFileData)
 		{
 			//TODO: Figure out async file transfer mechanism.
 		}
-	}))
+	})
 	rightClickMenu.getItems.addAll(download)
 	setOnContextMenuRequested(handleEvt[ContextMenuEvent](_evt =>
 		if (_evt.getSource.isInstanceOf[Node])
