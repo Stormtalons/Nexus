@@ -3,10 +3,9 @@
   <component name="FacetManager">
     <facet type="scala" name="Scala">
       <configuration>
-        <option name="compilerLibraryLevel" value="Project" />
+        <option name="compilerLibraryLevel" value="Global" />
         <option name="compilerLibraryName" value="Scala" />
         <option name="compilerOptions" value="-feature" />
-        <option name="explainTypeErrors" value="true" />
         <option name="languageLevel" value="Scala 2.11" />
         <option name="optimiseBytecode" value="true" />
       </configuration>
@@ -19,7 +18,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Scala" level="project" />
+    <orderEntry type="library" name="sw.common" level="application" />
+    <orderEntry type="library" name="Scala" level="application" />
   </component>
 </module>
 

@@ -1,28 +1,28 @@
 package nx.widgets
 
 import java.io.File
-import javafx.event.ActionEvent
 import javafx.scene.Node
-import javafx.scene.control.{MenuItem, ContextMenu, Tooltip}
-import javafx.scene.input.{ContextMenuEvent, MouseEvent}
+import javafx.scene.control.{ContextMenu, MenuItem}
+import javafx.scene.input.ContextMenuEvent
 
 import nx.comm.sendable.{RemoteFile, Sendable}
 import nx.settings.StringSetting
-import nx.util.{JSON, InterfaceShortcuts, Tools}
+import nx.util.{JSON, Tools}
+import sw.common.ui.UIShortcuts
 
-class FileWidget(_fileName: String) extends Widget with Content[RemoteFile] with Tools with InterfaceShortcuts
+class FileWidget(_fileName: String) extends Widget with Content[RemoteFile] with Tools with UIShortcuts
 {
 	getStyleClass.add("fileWidget")
 
 	def this(_file: File) =
 	{
 		this(_file.getName)
-		content.obj.fileData = _file: Array[Byte]
+		content.obj.fileData = fileBytes(_file)
 	}
 
 	var fileName = _fileName
 	
-	var content = new Sendable[RemoteFile](new RemoteFile(fileName))
+	var content = new Sendable[RemoteFile](new RemoteFile(fileName), Sendable.typeToGUID[RemoteFile])
 
 	protected val name = new StringSetting("", fileName, "/nx/res/file.png", scale)
 	name.editable = false

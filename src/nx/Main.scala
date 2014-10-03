@@ -4,9 +4,8 @@ import java.awt.event.ActionListener
 import java.awt.{MenuItem, PopupMenu, SystemTray, TrayIcon}
 import java.io.{File, FileWriter}
 import java.net._
-import java.nio.channels.{SelectionKey, Selector}
 import java.util.UUID
-import javafx.application.{Platform, Application}
+import javafx.application.Application
 import javafx.event.ActionEvent
 import javafx.scene.Scene
 import javafx.scene.control.Button
@@ -17,8 +16,9 @@ import javax.imageio.ImageIO
 
 import nx.comm.ConnectionManager
 import nx.comm.sendable.Sendable
-import nx.util.{JSON, InterfaceShortcuts, Tools}
+import nx.util.{Tools, JSON}
 import nx.widgets.{FileWidget, FolderWidget}
+import sw.common.ui.UIShortcuts
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
 
 //	</Dev tools>
 
-object Main extends App with Tools with InterfaceShortcuts
+object Main extends App with Tools with UIShortcuts
 {
 	var serverPort_ = 19265
 	var bufferSize_ = 8192
@@ -51,7 +51,7 @@ object Main extends App with Tools with InterfaceShortcuts
 		createServerChannel.bind(new InetSocketAddress("0.0.0.0", serverPort))
 		instance = 1
 		log("Host instance initialized")
-	}.^^
+	}^^
 	{
 		useConfig = false
 		instance = 2
@@ -60,7 +60,8 @@ object Main extends App with Tools with InterfaceShortcuts
 //	</Dev tools>
 
 	var connManager: ConnectionManager = new ConnectionManager
-	val receivedItems = new mutable.HashMap[UUID, Sendable[_]]()
+	var receivedItems_ = new mutable.HashMap[UUID, Sendable[_]]
+	val msgs = new ArrayBuffer[String]
 	var window_ : Window = null
 	var desktopPanel_ : AnchorPane = null
 	var desktop_ : FolderWidget = null
@@ -76,7 +77,7 @@ object Main extends App with Tools with InterfaceShortcuts
 	new Main().launch
 
 	def serialize = desktop.toSendable._1.condensed
-	def saveState = if (useConfig) toFile("config.ini", serialize)
+	def saveState = if (useConfig) writeToFile("config.ini", serialize)
 	def loadState(_json: JSON, _isRemote: Boolean = false) =
 	{
 		log("Initializing application state")
@@ -114,14 +115,14 @@ object Main extends App with Tools with InterfaceShortcuts
 		//TODO: Find string parse error in serialize
 //		ex(Main.saveState)
 		log("Application state saved")
-		connManager.stopAndWait
+//		connManager.stopAndWait
 		log("Connection manager stopped")
 		log("Exiting application", 2)
 		logWriter.close
 	}
 }
 
-class Main extends Application with Tools with InterfaceShortcuts
+class Main extends Application with Tools with UIShortcuts
 {
 	def launch = javafx.application.Application.launch()
 
@@ -150,12 +151,10 @@ class Main extends Application with Tools with InterfaceShortcuts
 		val json = new Button("Desktop To JSON")
 		json.setOnAction(handle[ActionEvent](() => log(desktop.toSendable._1 + "\n\n")))
 		val cnct = new Button("Connect to self")
-		cnct.setOnAction(handle[ActionEvent](() => Main.connManager.connect("127.0.0.1", serverPort)))
+//		cnct.setOnAction(handle[ActionEvent](() => Main.connManager.connect("127.0.0.1", serverPort)))
 		val test = new Button("Test")
-		test.setOnAction(handle[ActionEvent](() => toFile("test.txt", "DESKTOP" + sep + Main.serialize + eom)))
-		val swarmlings = new Button("Peer sockets")
-		swarmlings.setOnAction(handle[ActionEvent](() => Main.connManager.printConnections))
-		devToolbar.getChildren.addAll(newFolder, json, cnct, test, swarmlings)
+		test.setOnAction(handle[ActionEvent](() => writeToFile("test.txt", "DESKTOP" + sep + Main.serialize + eom)))
+		devToolbar.getChildren.addAll(newFolder, json, cnct, test)
 
 		mainPanel.getChildren.add(devToolbar)
 

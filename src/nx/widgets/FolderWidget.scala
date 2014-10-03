@@ -1,6 +1,5 @@
 package nx.widgets
 
-import java.awt.Desktop
 import java.io.File
 import javafx.event.ActionEvent
 import javafx.geometry.{HPos, Pos, VPos}
@@ -13,12 +12,13 @@ import javafx.stage.FileChooser
 
 import nx.comm.sendable.Sendable
 import nx.settings.StringSetting
-import nx.util.{JSON, InterfaceShortcuts, Tools}
+import nx.util.{JSON, Tools}
+import sw.common.ui.UIShortcuts
 
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 
-class FolderWidget extends Widget with Tools with InterfaceShortcuts
+class FolderWidget extends Widget with Tools with UIShortcuts
 {
 	getStyleClass.add("folderWidget")
 
@@ -250,7 +250,7 @@ class FolderWidget extends Widget with Tools with InterfaceShortcuts
 		toReturn += JSON("expanded", isExpanded.toString)
 		if (background != null)
 		{
-			val si = new Sendable(background)
+			val si = new Sendable(background, Sendable.typeToGUID[Image])
 			items += si
 			toReturn += JSON("background", si.guid: String)
 		}

@@ -5,7 +5,7 @@ import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.{GridPane, StackPane}
 
 import nx.Main
-import nx.util.{Code, Tools}
+import nx.util.Tools
 
 object Setting
 {

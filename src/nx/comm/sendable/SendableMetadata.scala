@@ -19,4 +19,5 @@ case class SendableMetadata(guid: UUID, piece: Int, totalPieces: Int, data: Arra
 	def is(_guid: UUID) = _guid.equals(guid)
 	override def toString: String = guid + sep + piece + sep + totalPieces + sep + (data: String)
 	def toBytes: Array[Byte] = toString: Array[Byte]
+	def assemble: Sendable[_] = if (totalPieces == 1) Sendable.construct(guid, data) else null
 }
